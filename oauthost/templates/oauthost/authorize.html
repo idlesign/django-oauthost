@@ -1,0 +1,17 @@
+{% extends 'common/base.html' %}{% load i18n %}
+{% block oauthost_authorize %}
+<form method="post">{% csrf_token %}
+    <p>
+        {% if client.link %}<a href="{{ client.link }}" target="_blank">{{ client.title }}</a>{% else %}<b>{{ client.title }}</b>{% endif %}
+        {% blocktrans %}application asks you to grant it an access to:{% endblocktrans %}
+    </p>
+    <ul>{% for scope in scopes_obj %}<li>{{ scope.title }}</li>{% endfor %}</ul>
+    {% if client.description %}<p class="faded"><i>{{ client.description }}</i></p>{% endif %}
+
+    <div id="box_buttons">
+        <input type="submit" name="confirmed" value="{% trans "Yes, authorize it" %}"> &nbsp;
+        <input type="submit" name="declined" value="{% trans "No, I do not agree" %}">
+    </div>
+    <input type="hidden" name="auth_decision" value="is_made">
+</form>
+{% endblock %}

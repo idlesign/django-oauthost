@@ -1,0 +1,34 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">{% load i18n %}
+<html>
+<head>
+    <title>{{ oauthost_title }}</title>
+    <style type="text/css">
+        *, body { padding: 0; margin: 0; font-family: Verdana; font-size: 14px; }
+        #container { position: absolute; top: 10%; width: 100%; }
+        #dialog { border: 1px solid #ddd; margin: 0 auto; width: 450px; border-bottom-left-radius: 10px; border-bottom-right-radius: 10px; }
+        #contents { padding: 20px 10px }
+        #heading { background-color: #eee; padding: 10px; border-bottom: 1px solid #ddd; }
+        #powered_by, #powered_by a {font-size: 8px; color: #b5b5b5; }
+        #powered_by { text-align: right; position: relative; bottom: -15px; }
+        #box_buttons { text-align: right; margin-top: 20px; }
+        h1 { font-size: 18px; }
+        p { margin-bottom: 10px; }
+        ul { margin-left: 35px; margin-bottom: 15px; color: #333; }
+        input { padding: 4px; }
+        .faded { color: #666; }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div id="dialog">
+            <div id="heading">
+                <h1>{{ oauthost_title }}</h1>
+            </div>
+            <div id="contents">
+                {% block oauthost_authorize %}{% endblock %}
+            </div>
+            <div id="powered_by">Authorization is powered by <a href="https://github.com/idlesign/django-oauthost/" target="_blank">OAuthost</a></div>
+        </div>
+    </div>
+</body>
+</html>
