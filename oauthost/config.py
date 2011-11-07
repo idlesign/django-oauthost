@@ -11,3 +11,4 @@ REGISTRY_TOKEN_TYPE = {
 OAUTHOST_TEMPLATE_AUTHORIZE = 'oauthost/authorize.html'
 OAUTHOST_TEMPLATE_AUTHORIZE_ERROR = 'oauthost/authorize_error.html'
 OAUTHOST_TEMPLATE_AUTHORIZE_PROCEED = 'oauthost/authorize_proceed.html'
+OAUTHOST_TEMPLATE_FORBIDDEN = 'oauthost/forbidden.html'
