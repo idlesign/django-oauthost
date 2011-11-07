@@ -1,5 +1,5 @@
 {% extends 'common/base.html' %}{% load i18n %}
-{% block oauthost_authorize %}
+{% block oauthost_contents %}
 <form method="post" action="{{ action_uri }}">
     <p>{% blocktrans %}To return back to application please push the button below.{% endblocktrans %}</p>
     <div id="box_buttons"><input type="submit" name="confirmed" value="{% trans "Return" %}"></div>
