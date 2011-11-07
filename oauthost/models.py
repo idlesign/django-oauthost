@@ -5,6 +5,8 @@ from django.db import models, IntegrityError
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.auth.models import User
 
+from config import *
+
 
 class Scope(models.Model):
 
@@ -120,18 +122,12 @@ class AuthorizationCode(models.Model):
 
 class Token(models.Model):
 
-    TOKEN_TYPE_BEARER = 'bearer'
-    # Access Token Types: Bearer, MAC
-    TOKEN_TYPE_CHOICES = {
-        (TOKEN_TYPE_BEARER, _('Bearer')),
-    }
-
     # A maximum authorization code lifetime of 10 minutes is RECOMMENDED
     date_issued = models.DateTimeField(_('Issued at'), auto_now_add=True)
     expires_at = models.DateTimeField(_('Expires at'), help_text=_('Time when this token expires.'), null=True, blank=True)
     access_token = models.CharField(_('Access Token'), max_length=32, help_text=_('Token to be used to access resources.'), unique=True)
     refresh_token = models.CharField(_('Refresh Token'), max_length=32, help_text=_('Token to be used to refresh access token.'), unique=True, null=True, blank=True)
-    access_token_type = models.CharField(_('Type'), max_length=100, help_text=_('Access token type client uses to apply the appropriate authorization method.'), choices=TOKEN_TYPE_CHOICES, default=TOKEN_TYPE_BEARER)
+    access_token_type = models.CharField(_('Type'), max_length=100, help_text=_('Access token type client uses to apply the appropriate authorization method.'), choices=REGISTRY_TOKEN_TYPE, default=TOKEN_TYPE_BEARER)
     user = models.ForeignKey(User, verbose_name=_('User'), help_text=_('The user token is issued for.'), null=True, blank=True)
     client = models.ForeignKey(Client, verbose_name=_('Client'), help_text=_('The client application token is issued for.'))
     code = models.ForeignKey(AuthorizationCode, verbose_name=_('Code'), help_text=_('Authorization code used to generate this token.'), null=True, blank=True)

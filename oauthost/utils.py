@@ -3,7 +3,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.utils import simplejson
 from django.utils.translation import ugettext_lazy as _
 
-import auth_views
+from config import *
 from models import Scope
 
 
@@ -84,7 +84,7 @@ def resolve_scopes_to_apply(scopes_requested, client):
 def ep_auth_response_error_page(request, error_text):
     """For authorization endpoint. Renders a page with error description."""
     data_dict = {'oauthost_title': _('Error'), 'oauthost_error_text': error_text}
-    return render(request, auth_views.OAUTHOST_TEMPLATE_AUTHORIZE_ERROR, data_dict, status=400)
+    return render(request, OAUTHOST_TEMPLATE_AUTHORIZE_ERROR, data_dict, status=400)
 
 
 def ep_auth_build_redirect_uri(redirect_base, params, use_uri_fragment):
