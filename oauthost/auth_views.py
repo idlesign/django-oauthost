@@ -1,5 +1,4 @@
 import base64
-import logging
 
 from time import time
 from datetime import datetime
@@ -16,7 +15,6 @@ from models import Client, AuthorizationCode, Token
 from utils import *
 from config import *
 
-LOGGER = logging.getLogger('django.oauthost')
 
 @login_required
 def endpoint_authorize(request):

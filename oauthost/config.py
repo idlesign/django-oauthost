@@ -1,4 +1,8 @@
+import logging
+
 from django.utils.translation import ugettext_lazy as _
+
+LOGGER = logging.getLogger('django.oauthost')
 
 REGISTRY_EP_AUTH_RESPONSE_TYPE = ['code', 'token']
 REGISTRY_EP_TOKEN_GRANT_TYPE = ['authorization_code', 'password', 'client_credentials', 'refresh_token']
