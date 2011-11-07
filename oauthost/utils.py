@@ -1,10 +1,11 @@
+from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseRedirect
 from django.utils import simplejson
 from django.utils.translation import ugettext_lazy as _
 
 from config import *
-from models import Scope
+from models import Scope, Token
 
 
 def filter_input_params(input_params):
@@ -131,3 +132,64 @@ def ep_token_response(params, status=200, additional_headers={}):
 def ep_token_reponse_error(error_type, description, status=400, additional_headers={}):
     """For token endpoint. Issues JSON error response."""
     return ep_token_response({'error': error_type, 'error_description': description}, status, additional_headers)
+
+
+def check_token_bearer(request):
+    """Tries to fetch token data for bearer token type.
+
+    SPEC: http://tools.ietf.org/html/draft-ietf-oauth-v2-bearer
+
+    """
+    # Authorization Request Header Field
+    authorization_method = request.META.get('Authorization')
+    if authorization_method is not None:
+        auth_method_type, auth_method_value = authorization_method.split(' ', 1)
+        if auth_method_type == 'Bearer':
+            return auth_method_value
+    # Form-Encoded Body Parameter or URI Query Parameter
+    token = request.REQUEST.get('access_token')
+    if token is not None:
+        return token
+    return False
+
+
+def check_token(request):
+    """Checks for token data in request using various
+    methods depending on token types defined in REGISTRY_TOKEN_TYPE.
+
+    This leads to sequential functions named `check_token_{type_id}` calls.
+
+    """
+    token_types = [item[0] for item in REGISTRY_TOKEN_TYPE]
+    token_id = None
+    token_type = None
+
+    for type_id in token_types:
+        check_func_name = 'check_token_%s' % type_id
+        try:
+            result = globals()[check_func_name](request)
+            if result:
+                token_id = result
+                token_type = type_id
+                break
+        except KeyError:
+            continue
+
+    if token_id is None:
+        return False
+
+    try:
+        token = Token.objects.get(access_token=token_id)
+    except ObjectDoesNotExist:
+        return False
+
+    # If token found is granted to all the different token type.
+    if token.access_token_type != token_type:
+        return False
+
+    return True
+
+
+def forbidden_error_response(request):
+    """Renders `forbidden` page."""
+    return render(request, OAUTHOST_TEMPLATE_FORBIDDEN, {'oauthost_title': _('Access Denied')}, status=403)
