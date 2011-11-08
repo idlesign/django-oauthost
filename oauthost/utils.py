@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseRedirect
@@ -185,6 +187,10 @@ def check_token(request, scope=None):
     try:
         token = Token.objects.get(access_token=token_id)
     except ObjectDoesNotExist:
+        return False
+
+    # Token has expired.
+    if token.expires_at <= datetime.now():
         return False
 
     # If token found is granted to all the different token type.
