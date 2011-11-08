@@ -19,7 +19,7 @@ class Scope(models.Model):
         ordering = ['title']
 
     def __unicode__(self):
-        return _(u'Scope "%s"') % self.identifier
+        return '%s' % self.identifier
 
 
 class Client(models.Model):
@@ -82,7 +82,7 @@ class RedirectionEndpoint(models.Model):
         verbose_name_plural = _('Redirection Endpoints')
 
     def __unicode__(self):
-        return _(u'Redirect to "%s"') % self.uri
+        return '%s' % self.uri
 
 
 class AuthorizationCode(models.Model):
@@ -100,7 +100,7 @@ class AuthorizationCode(models.Model):
         verbose_name_plural = _('Authorization codes')
 
     def __unicode__(self):
-        return _(u'Authorization code "%s"') % self.code
+        return '%s' % self.code
 
     def generate_code(self):
         """Code length: 7 chars."""
@@ -138,7 +138,7 @@ class Token(models.Model):
         verbose_name_plural = _('Tokens')
 
     def __unicode__(self):
-        return _(u'Token "%s"') % self.code
+        return '%s' % self.code
 
     def generate_token(self):
         """Identifier length: 32 chars."""
