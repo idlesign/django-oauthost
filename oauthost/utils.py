@@ -150,14 +150,18 @@ def check_token_bearer(request):
     token = request.REQUEST.get('access_token')
     if token is not None:
         return token
+
+    # TODO Need to return WWW-Authenticate header in fact. If we do respect spec, of course %)
     return False
 
 
-def check_token(request):
+def check_token(request, scope=None):
     """Checks for token data in request using various
     methods depending on token types defined in REGISTRY_TOKEN_TYPE.
 
     This leads to sequential functions named `check_token_{type_id}` calls.
+
+    ``scope`` - scope identifier string to check token has access to the scope.
 
     """
     token_types = [item[0] for item in REGISTRY_TOKEN_TYPE]
@@ -186,6 +190,11 @@ def check_token(request):
     # If token found is granted to all the different token type.
     if token.access_token_type != token_type:
         return False
+
+    # If target scope is defined, let's verify that the token has access to it.
+    if scope is not None:
+        if not token.scopes.filter(identifier=scope).count():
+            return False
 
     return True
 
