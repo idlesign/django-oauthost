@@ -21,7 +21,6 @@ def oauth_required(scope=None, scope_auto=False):
             target_scope = scope
 
             if scope_auto:
-                # TODO Need to consider a management command to automatically register scopes from apps.
                 target_scope = '%(app_name)s:%(view_name)s' % {
                     'app_name': view_function.__module__.split('.')[0],
                     'view_name': view_function.__name__}
