@@ -11,9 +11,9 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.translation import ugettext_lazy as _
 
-from models import Client, AuthorizationCode, Token
-from utils import *
-from config import *
+from oauthost.models import Client, AuthorizationCode, Token
+from oauthost.utils import *
+from oauthost.config import *
 
 
 @login_required
@@ -34,7 +34,7 @@ def endpoint_authorize(request):
     # security mechanism when sending requests to the authorization endpoint.
     if not request.is_secure() and not settings.DEBUG:
         # Insecure connections are only available in debug mode.
-        return ep_auth_response_error_page(request, _('OAuth requires secure connection to be established.'))
+        return ep_auth_response_error_page(request, _('OAuth requires secure connection to be established.'), 403)
 
     if request.POST.get('auth_decision') is None:
         # User has made no decision on auth confirmation yet.
@@ -60,7 +60,7 @@ def endpoint_authorize(request):
             LOGGER.error('Invalid client ID supplied. Value "%s" was sent from IP "%s".' % (client_id, get_remote_ip(request)))
             return ep_auth_response_error_page(request, _('Invalid client ID is supplied.'))
 
-        # TODO There should be at least one redirection URI associated with a client. URI validity should be checked while such association is made.
+        # TODO There should be at least one redirection URI associated with a client. URI validity should be checked while such an association is made.
         registered_uris = [url[0] for url in client.redirectionendpoint_set.values_list('uri')]
 
         # Check redirection URI validity.
@@ -176,7 +176,7 @@ def endpoint_token(request):
     # security mechanism when sending requests to the token endpoint.
     if not request.is_secure() and not settings.DEBUG:
         # Insecure connections are only available in debug mode.
-        return ep_auth_response_error_page(request, _('OAuth requires secure connection to be established.'))
+        return ep_auth_response_error_page(request, _('OAuth requires secure connection to be established.'), 403)
 
     input_params = filter_input_params(request.POST)
 
@@ -186,6 +186,7 @@ def endpoint_token(request):
 
     token_obj_params = {}
     error_out_headers = {}
+    client = None
     client_id = None
     client_secret = None
 
@@ -210,13 +211,19 @@ def endpoint_token(request):
         client_secret = input_params.get('client_secret')
 
     if client_id is not None:
-        supposed_client = Client.objects.get(identifier=client_id)
+        try:
+            client = Client.objects.get(identifier=client_id)
+        except ObjectDoesNotExist:
+            client = None
+
         # SPEC: A public client that was not issued a client password MAY use
         # the "client_id" request parameter to identify itself when sending requests
         # to the token endpoint.
-        if supposed_client.password.strip() == '' or supposed_client.password == client_secret:
-            client = supposed_client
-    else:
+        if client is not None:
+            if client.password.strip() != '' and client.password != client_secret:
+                client = None
+
+    if client is None:
         return ep_token_reponse_error('invalid_client', 'Unable to authenticate client by its credentials.', 401, error_out_headers)
 
     # Calculate token expiration datetime.
@@ -317,7 +324,7 @@ def endpoint_token(request):
     if grant_type == 'client_credentials':
         del(output_params['refresh_token'])
 
-    # TODO Some auth methods require additional parameters to be passed.
+    # TODO Some auth methods require additional parameters to be passed as spec puts it.
     additional_params = {}
 
     return ep_token_response(output_params)

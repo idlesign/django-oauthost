@@ -2,8 +2,9 @@ from django.test import TestCase
 from django.utils import simplejson as json
 from django.test.client import Client as TestClient
 from django.contrib.auth.models import User
+from django.conf import settings
 
-from models import AuthorizationCode, Token, Client, RedirectionEndpoint
+from oauthost.models import AuthorizationCode, Token, Client, RedirectionEndpoint
 
 
 URL_TOKEN = '/token/'
@@ -37,6 +38,12 @@ class EndpointTokenCheck(TestCase):
     client_class = OAuthostCLient
 
     def test_grant_authorization_code(self):
+
+        # Secure connection check
+        settings.DEBUG = False
+        resp = self.client.get(URL_TOKEN, {})
+        self.assertEqual(resp.status_code, 403)
+        settings.DEBUG = True
 
         resp = self.client.post(URL_TOKEN, {'grant_type': 'a'})
         self.assertEqual(resp.status_code, 400)
@@ -100,7 +107,6 @@ class EndpointTokenCheck(TestCase):
         self.assertTrue('access_token' in resp.content_json)
         self.assertTrue('refresh_token' in resp.content_json)
         self.assertTrue('token_type' in resp.content_json)
-        self.assertTrue('expires_in' in resp.content_json)
 
         # An additional call for code issues token and code invalidation.
         resp = self.client.post(URL_TOKEN, {'grant_type': 'authorization_code', 'code': '1234567',
@@ -115,6 +121,7 @@ class EndpointAuthorizeCheck(TestCase):
     client_class = OAuthostCLient
 
     def test_auth(self):
+
         # User is not logged in.
         resp = self.client.get(URL_AUTHORIZE, {'client_id': '100'})
         self.assertEqual(resp.status_code, 302)
@@ -125,6 +132,12 @@ class EndpointAuthorizeCheck(TestCase):
 
         # Logging the user in.
         self.client.login(username='Fred', password='12345')
+
+        # Secure connection check
+        settings.DEBUG = False
+        resp = self.client.get(URL_AUTHORIZE, {})
+        self.assertEqual(resp.status_code, 403)
+        settings.DEBUG = True
 
         # Missing client id.
         resp = self.client.get(URL_AUTHORIZE, {'response_type': 'code'})
@@ -239,7 +252,6 @@ class GrantsCheck(TestCase):
         self.assertTrue('access_token' in resp.content_json)
         self.assertTrue('refresh_token' in resp.content_json)
         self.assertTrue('token_type' in resp.content_json)
-        self.assertTrue('expires_in' in resp.content_json)
 
     def test_authorization_code_http_basic(self):
 
@@ -286,7 +298,6 @@ class GrantsCheck(TestCase):
         self.assertTrue('access_token' in resp.content_json)
         self.assertTrue('refresh_token' in resp.content_json)
         self.assertTrue('token_type' in resp.content_json)
-        self.assertTrue('expires_in' in resp.content_json)
 
     def test_password_http_basic(self):
 
@@ -342,7 +353,6 @@ class GrantsCheck(TestCase):
         self.assertTrue('access_token' in resp.content_json)
         self.assertTrue('refresh_token' not in resp.content_json)
         self.assertTrue('token_type' in resp.content_json)
-        self.assertTrue('expires_in' in resp.content_json)
 
         access_token = resp.content_json['access_token']
         token = Token.objects.get(access_token=access_token)
@@ -408,3 +418,6 @@ class GrantsCheck(TestCase):
 
         token_updated = Token.objects.get(access_token=resp.content_json['access_token'])
         self.assertNotEqual(date_issued, token_updated.date_issued)
+
+
+# TODO Add tests for Bearer auth.

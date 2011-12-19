@@ -2,7 +2,7 @@ from functools import wraps
 
 from django.utils.decorators import available_attrs
 
-from utils import check_token, forbidden_error_response
+from oauthost.utils import auth_handler_response
 
 
 def oauth_required(scope=None, scope_auto=False):
@@ -25,13 +25,7 @@ def oauth_required(scope=None, scope_auto=False):
                     'app_name': view_function.__module__.split('.')[0],
                     'view_name': view_function.__name__}
 
-            if not check_token(request, scope=target_scope):
-                # For now we just use generic error page no matter what
-                # token type is used and what that's type spec tells us to do.
-                # We are evil enough, I confirm.
-                # Yet, it may change some day.
-                return forbidden_error_response(request)
-            return view_function(request, *args, **kwargs)
+            return auth_handler_response(request, scope=target_scope) or view_function(request, *args, **kwargs)
         return wrapper
 
     return decorated_view

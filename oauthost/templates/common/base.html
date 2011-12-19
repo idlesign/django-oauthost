@@ -22,7 +22,7 @@
     <div id="container">
         <div id="dialog">
             <div id="heading">
-                <h1>{{ oauthost_title }}</h1>
+                <h1>{% block oauthost_title %}{{ oauthost_title }}{% endblock %}</h1>
             </div>
             <div id="contents">
                 {% block oauthost_contents %}{% endblock %}

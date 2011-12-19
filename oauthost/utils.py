@@ -1,13 +1,10 @@
-from datetime import datetime
-
-from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseRedirect
 from django.utils import simplejson
 from django.utils.translation import ugettext_lazy as _
 
-from config import *
-from models import Scope, Token
+from oauthost.config import *
+from oauthost.models import Scope
 
 
 def filter_input_params(input_params):
@@ -84,10 +81,10 @@ def resolve_scopes_to_apply(scopes_requested, client):
     return scopes_to_apply
 
 
-def ep_auth_response_error_page(request, error_text):
+def ep_auth_response_error_page(request, error_text, http_status=400):
     """For authorization endpoint. Renders a page with error description."""
     data_dict = {'oauthost_title': _('Error'), 'oauthost_error_text': error_text}
-    return render(request, OAUTHOST_TEMPLATE_AUTHORIZE_ERROR, data_dict, status=400)
+    return render(request, OAUTHOST_TEMPLATE_AUTHORIZE_ERROR, data_dict, status=http_status)
 
 
 def ep_auth_build_redirect_uri(redirect_base, params, use_uri_fragment):
@@ -136,75 +133,24 @@ def ep_token_reponse_error(error_type, description, status=400, additional_heade
     return ep_token_response({'error': error_type, 'error_description': description}, status, additional_headers)
 
 
-def check_token_bearer(request):
-    """Tries to fetch token data for bearer token type.
-
-    SPEC: http://tools.ietf.org/html/draft-ietf-oauth-v2-bearer
-
-    """
-    # Authorization Request Header Field
-    authorization_method = request.META.get('Authorization')
-    if authorization_method is not None:
-        auth_method_type, auth_method_value = authorization_method.split(' ', 1)
-        if auth_method_type == 'Bearer':
-            return auth_method_value
-    # Form-Encoded Body Parameter or URI Query Parameter
-    token = request.REQUEST.get('access_token')
-    if token is not None:
-        return token
-
-    # TODO Need to return WWW-Authenticate header in fact. If we do respect spec, of course %)
-    return False
+def forbidden_error_response(request):
+    """Renders `forbidden` page."""
+    return render(request, OAUTHOST_TEMPLATE_FORBIDDEN, {'oauthost_title': _('Access Denied')}, status=403)
 
 
-def check_token(request, scope=None):
+def auth_handler_response(request, scope=None):
     """Checks for token data in request using various
     methods depending on token types defined in REGISTRY_TOKEN_TYPE.
-
-    This leads to sequential functions named `check_token_{type_id}` calls.
 
     ``scope`` - scope identifier string to check token has access to the scope.
 
     """
-    token_types = [item[0] for item in REGISTRY_TOKEN_TYPE]
-    token_id = None
-    token_type = None
+    token_auth_classes = [item[2] for item in REGISTRY_TOKEN_TYPE]
 
-    for type_id in token_types:
-        check_func_name = 'check_token_%s' % type_id
-        try:
-            result = globals()[check_func_name](request)
-            if result:
-                token_id = result
-                token_type = type_id
-                break
-        except KeyError:
-            continue
+    for auth_class in token_auth_classes:
+        handler = auth_class(request, scope)
+        response = handler.response()
+        if response is not None:
+            return response
 
-    if token_id is None:
-        return False
-
-    try:
-        token = Token.objects.get(access_token=token_id)
-    except ObjectDoesNotExist:
-        return False
-
-    # Token has expired.
-    if token.expires_at <= datetime.now():
-        return False
-
-    # If token found is granted to all the different token type.
-    if token.access_token_type != token_type:
-        return False
-
-    # If target scope is defined, let's verify that the token has access to it.
-    if scope is not None:
-        if not token.scopes.filter(identifier=scope).count():
-            return False
-
-    return True
-
-
-def forbidden_error_response(request):
-    """Renders `forbidden` page."""
-    return render(request, OAUTHOST_TEMPLATE_FORBIDDEN, {'oauthost_title': _('Access Denied')}, status=403)
+    return None
