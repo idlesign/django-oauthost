@@ -3,13 +3,26 @@ django-oauthost
 http://github.com/idlesign/django-oauthost
 
 
-**Hello, ladies and gentlemen, take your seats and be patient please - this project is in ALPHA STAGE.**
+*ALPHA STAGE PROJECT. NOT TO BE USED IN PRODUCTION*
 
 
 What's that
 -----------
 
 *django-oauthost is a reusable application for Django, introducing OAuth2 server.*
+
+
+Quick start
+-----------
+
+Attach `oauthost.urls` to project `urls`.
+
+Authorization endpoint would be available at `{ BASE_URL }auth/`.
+
+Token endpoint would be available at `{ BASE_URL }token/`.
+
+*Use Django's Admin site contrib package to manipulate oauthost data (e.g. register clients).*
+
 
 
 **Documentation**: http://readthedocs.org/docs/django-oauthost/en/latest/
