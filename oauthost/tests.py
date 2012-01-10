@@ -299,7 +299,7 @@ class GrantsCheck(TestCase):
         self.assertTrue('refresh_token' in resp.content_json)
         self.assertTrue('token_type' in resp.content_json)
 
-    def test_password_http_basic(self):
+    def test_token_by_user_credentials(self):
 
         user_1 = User(username='Fred')
         user_1.set_password('12345')
@@ -333,7 +333,7 @@ class GrantsCheck(TestCase):
         self.assertTrue('token_type' in resp.content_json)
         self.assertTrue('expires_in' in resp.content_json)
 
-    def test_password_http_basic(self):
+    def test_token_by_client_credentials(self):
 
         user_1 = User(username='Fred')
         user_1.set_password('12345')
