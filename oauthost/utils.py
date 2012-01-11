@@ -61,6 +61,7 @@ def resolve_scopes_to_apply(scopes_requested, client):
     # scope granted.
 
     # No scopes requested, and we are giving an access to all scopes available.
+    # TODO Needs revision.
     if not scopes_requested:
         scopes_to_apply = scopes_available
 
@@ -68,10 +69,10 @@ def resolve_scopes_to_apply(scopes_requested, client):
     scopes_available_set = set(s.identifier for s in scopes_available)
     if set(scopes_requested).difference(scopes_available_set):
         scopes_to_apply_ids = scopes_available_set.intersection(scopes_requested)
-        # TODO Decision needed.
-        # Only unavailable scopes are requested. We give an access to all scopes????
         if not scopes_to_apply_ids:
-            scopes_to_apply = scopes_available
+            # Only unavailable scopes are requested.
+            # TODO Needs revision.
+            scopes_to_apply = []
         else:
             scopes_to_apply = []
             for scope in scopes_available:
@@ -154,3 +155,26 @@ def auth_handler_response(request, scope=None):
             return response
 
     return None
+
+
+class PistonAuthHelper(object):
+    """Authentication class for Piston resources.
+
+    To be used in a usual piston-auth-way::
+
+        from piston.resource import Resource
+        from oauthost.utils import PistonAuthHelper
+
+        my_resource_view = Resource(MyResourceHandler, authentication=PistonAuthHelper('my_resource:my_scope'))
+
+    """
+
+    def __init__(self, target_scope):
+        self.target_scope = target_scope
+
+    def is_authenticated(self, request):
+        self.auth_response = auth_handler_response(request, scope=self.target_scope)
+        return not self.auth_response
+
+    def challenge(self):
+        return self.auth_response
