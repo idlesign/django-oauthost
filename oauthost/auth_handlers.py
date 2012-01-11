@@ -31,7 +31,7 @@ class BearerAuthHandler():
         token = None
 
         # Authorization Request Header Field
-        authorization_method = self._request.META.get('Authorization')
+        authorization_method = self._request.META.get('HTTP_AUTHORIZATION')
         if authorization_method is not None:
             auth_method_type, auth_method_value = authorization_method.split(' ', 1)
             if auth_method_type == 'Bearer':
@@ -40,7 +40,7 @@ class BearerAuthHandler():
             # Form-Encoded Body Parameter or URI Query Parameter
             token = self._request.REQUEST.get('access_token')
 
-        if not token:
+        if token is None:
             self._error = 'invalid_request'
         else:
             self._token = token
@@ -48,7 +48,6 @@ class BearerAuthHandler():
     def validate_token(self):
 
         if self._token is None:
-            self._error = 'invalid_token'
             return False
 
         from oauthost.models import Token
@@ -64,7 +63,7 @@ class BearerAuthHandler():
             return False
 
         # Token has expired.
-        if token.expires_at <= datetime.now():
+        if token.expires_at is not None and token.expires_at <= datetime.now():
             self._error = 'invalid_token'
             return False
 
