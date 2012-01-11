@@ -32,6 +32,10 @@ Check list
 
   `django.core.context_processors.request`
 
+* INSTALLED_APPS has
+
+  `oauthost`
+
 
 Table of Contents
 -----------------
@@ -40,6 +44,7 @@ Table of Contents
     :maxdepth: 2
 
     quickstart
+    helpers
     references
 
 

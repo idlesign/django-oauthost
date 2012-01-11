@@ -11,6 +11,11 @@ Quick start
 Preparations
 ------------
 
+0. Initialize DB tables for oauthost, run from command line:
+
+   ``python manage.py migrate``
+
+
 1. Attach `oauthost.urls` to project `urls`.
 
     Authorization endpoint would be available at `{ BASE_URL }auth/`.
