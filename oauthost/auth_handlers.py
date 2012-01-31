@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from django.contrib.auth import login
 from django.core.exceptions import ObjectDoesNotExist
 from django.template import loader, RequestContext
 from django.http import HttpResponse
@@ -72,6 +73,13 @@ class BearerAuthHandler():
             if not token.scopes.filter(identifier=self._scope).count():
                 self._error = 'insufficient_scope'
                 return False
+
+        # Token is valid and now we'll log it's owner in.
+
+        # Manual .backend attribute is set as an alternative to `authenticate()`.
+        # For now this hardcoded backend will do.
+        token.user.backend = 'django.contrib.auth.backends.ModelBackend'
+        login(self._request, token.user)
 
         return True
 
