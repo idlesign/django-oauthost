@@ -174,7 +174,7 @@ class PistonAuthHelper(object):
 
     def is_authenticated(self, request):
         self.auth_response = auth_handler_response(request, scope=self.target_scope)
-        return not self.auth_response
+        return self.auth_response is None
 
     def challenge(self):
         return self.auth_response
