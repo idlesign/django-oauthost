@@ -129,7 +129,7 @@ def ep_token_response(params, status=200, additional_headers={}):
     return response
 
 
-def ep_token_reponse_error(error_type, description, status=400, additional_headers={}):
+def ep_token_response_error(error_type, description, status=400, additional_headers={}):
     """For token endpoint. Issues JSON error response."""
     return ep_token_response({'error': error_type, 'error_description': description}, status, additional_headers)
 

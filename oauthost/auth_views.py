@@ -34,7 +34,7 @@ def endpoint_authorize(request):
     # security mechanism when sending requests to the authorization endpoint.
     if not request.is_secure() and not settings.DEBUG:
         # Insecure connections are only available in debug mode.
-        return ep_auth_response_error_page(request, _('OAuth requires secure connection to be established.'), 403)
+        return ep_auth_response_error_page(request, _('OAuth requires secure connection.'), 403)
 
     if request.POST.get('auth_decision') is None:
         # User has made no decision on auth confirmation yet.
@@ -71,8 +71,8 @@ def endpoint_authorize(request):
                 redirect_uri_final = registered_uris[0]
             else:
                 # Several URIs are registered with the client, decision is ambiguous.
-                LOGGER.error('Redirect URI is no supplied client with ID "%s". Request from IP "%s".' % (client.id, get_remote_ip(request)))
-                return ep_auth_response_error_page(request, _('Redirect URI should be supplied for given client.'))
+                LOGGER.error('Redirect URI was not supplied by client with ID "%s". Request from IP "%s".' % (client.id, get_remote_ip(request)))
+                return ep_auth_response_error_page(request, _('Redirect URI should be supplied for a given client.'))
 
         # SPEC: The authorization server SHOULD NOT redirect the user-agent to unregistered or untrusted URIs
         # to prevent the authorization endpoint from being used as an open redirector.
@@ -176,13 +176,13 @@ def endpoint_token(request):
     # security mechanism when sending requests to the token endpoint.
     if not request.is_secure() and not settings.DEBUG:
         # Insecure connections are only available in debug mode.
-        return ep_auth_response_error_page(request, _('OAuth requires secure connection to be established.'), 403)
+        return ep_auth_response_error_page(request, _('OAuth requires secure connection.'), 403)
 
     input_params = filter_input_params(request.POST)
 
     grant_type = input_params.get('grant_type')
     if grant_type not in REGISTRY_EP_TOKEN_GRANT_TYPE:
-        return ep_token_reponse_error('unsupported_grant_type', 'Usupported grant type is requested. Expected: `%s`. Given: `%s`' % ('`, `'.join(REGISTRY_EP_TOKEN_GRANT_TYPE), grant_type))
+        return ep_token_response_error('unsupported_grant_type', 'Unsupported grant type is requested. Expected: `%s`. Given: `%s`' % ('`, `'.join(REGISTRY_EP_TOKEN_GRANT_TYPE), grant_type))
 
     token_obj_params = {}
     error_out_headers = {}
@@ -224,7 +224,7 @@ def endpoint_token(request):
                 client = None
 
     if client is None:
-        return ep_token_reponse_error('invalid_client', 'Unable to authenticate client by its credentials.', 401, error_out_headers)
+        return ep_token_response_error('invalid_client', 'Unable to authenticate client by its credentials.', 401, error_out_headers)
 
     # Calculate token expiration datetime.
     expires_in = client.token_lifetime
@@ -239,12 +239,12 @@ def endpoint_token(request):
         redirect_uri = input_params.get('redirect_uri')
 
         if code is None or redirect_uri is None:
-            return ep_token_reponse_error('invalid_request', 'Required param(s) are missing. Expected: `code` and `redirect_uri`.')
+            return ep_token_response_error('invalid_request', 'Required param(s) are missing. Expected: `code` and `redirect_uri`.')
 
         try:
             code = AuthorizationCode.objects.get(code=code)
         except ObjectDoesNotExist:
-            return ep_token_reponse_error('invalid_grant', 'Invalid authorization code is supplied.')
+            return ep_token_response_error('invalid_grant', 'Invalid authorization code is supplied.')
 
         # SPEC: If an authorization code is used more than once, the authorization
         # server MUST deny the request and SHOULD attempt to revoke all tokens
@@ -253,13 +253,13 @@ def endpoint_token(request):
         if len(previous_tokens) > 0:
             previous_tokens.delete()
             code.delete()
-            return ep_token_reponse_error('invalid_grant', 'Authorization code is used more than once. Code and tokens are revoked.')
+            return ep_token_response_error('invalid_grant', 'Authorization code is used more than once. Code and tokens are revoked.')
 
         if code.uri != redirect_uri:
-            return ep_token_reponse_error('invalid_grant', 'Supplied URI does not match the URI associated with authorization code.')
+            return ep_token_response_error('invalid_grant', 'Supplied URI does not match the URI associated with authorization code.')
 
         if code.client.id != client.id:
-            return ep_token_reponse_error('invalid_grant', 'Authorization code supplied was issued to another client.')
+            return ep_token_response_error('invalid_grant', 'Authorization code supplied was issued to another client.')
 
         user = code.user
         token_obj_params['code'] = code
@@ -269,7 +269,7 @@ def endpoint_token(request):
         password = input_params.get('password')
 
         if username is None or password is None:
-            return ep_token_reponse_error('invalid_request', 'Required param(s) are missing. Expected: `username` and `password`.')
+            return ep_token_response_error('invalid_request', 'Required param(s) are missing. Expected: `username` and `password`.')
 
         invalid_credentials = False
         try:
@@ -281,7 +281,7 @@ def endpoint_token(request):
                 invalid_credentials = True
 
         if invalid_credentials:
-            return ep_token_reponse_error('invalid_grant', 'Supplied resource owner credentials are invalid.')
+            return ep_token_response_error('invalid_grant', 'Supplied resource owner credentials are invalid.')
 
     elif grant_type == 'client_credentials':  # Grant type: Client Credentials.
         # That one is somewhat unclear.
@@ -292,15 +292,15 @@ def endpoint_token(request):
         refresh_token = input_params.get('refresh_token')
 
         if refresh_token is None:
-            return ep_token_reponse_error('invalid_request', 'Required `refresh_token` param is missing.')
+            return ep_token_response_error('invalid_request', 'Required `refresh_token` param is missing.')
 
         try:
             token = Token.objects.get(refresh_token=refresh_token)
         except ObjectDoesNotExist:
-            return ep_token_reponse_error('invalid_grant', 'Refresh token supplied is invalid.')
+            return ep_token_response_error('invalid_grant', 'Refresh token supplied is invalid.')
         else:
             if token.client_id != client.id:
-                return ep_token_reponse_error('invalid_grant', 'Refresh token supplied was issued to another client.')
+                return ep_token_response_error('invalid_grant', 'Refresh token supplied was issued to another client.')
 
         # For refresh token grant we only swap token values.
         token.date_issued = datetime.now()
