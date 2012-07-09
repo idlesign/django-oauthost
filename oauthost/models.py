@@ -6,6 +6,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.contrib.auth.models import User
 
 from oauthost.config import *
+from oauthost.fields import URLSchemeField
 
 
 class Scope(models.Model):
@@ -75,7 +76,7 @@ class Client(models.Model):
 class RedirectionEndpoint(models.Model):
 
     client = models.ForeignKey(Client, verbose_name=_('Client'))
-    uri = models.URLField(_('URI'), help_text=_('Absolute URI or URI pattern for authorization server to redirect client to after completing its interaction with the resource owner.'))
+    uri = URLSchemeField(_('URI'), help_text=_('URI or URI scheme for authorization server to redirect client when an interaction with a resource owner is complete.'))
 
     class Meta:
         verbose_name = _('Redirection Endpoint')
@@ -92,7 +93,7 @@ class AuthorizationCode(models.Model):
     code = models.CharField(_('Code'), max_length=7, help_text=_('Code issued upon authorization.'), unique=True)
     user = models.ForeignKey(User, verbose_name=_('User'), help_text=_('The user authorization is granted for.'))
     client = models.ForeignKey(Client, verbose_name=_('Client'), help_text=_('The client authorization is granted for.'))
-    uri = models.URLField(_('Redirect URI'), help_text=_('Absolute URI authorization is bound to.'))
+    uri = URLSchemeField(_('Redirect URI'), help_text=_('The URI authorization is bound to.'))
     scopes = models.ManyToManyField(Scope, verbose_name=_('Scopes'), help_text=_('The scopes token issued from this code should be restricted to.'), null=True, blank=True)
 
     class Meta:
