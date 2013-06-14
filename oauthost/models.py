@@ -8,6 +8,10 @@ from django.contrib.auth.models import User
 from oauthost.config import *
 from oauthost.fields import URLSchemeField
 
+import django
+if django.VERSION >= (1,5):
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
 
 class Scope(models.Model):
 
