@@ -16,6 +16,10 @@ from oauthost.models import Client, AuthorizationCode, Token
 from oauthost.utils import *
 from oauthost.config import *
 
+import django
+if django.VERSION >= (1,5):
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
 
 @login_required
 def endpoint_authorize(request):
