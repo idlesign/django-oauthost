@@ -3,9 +3,6 @@ django-oauthost
 http://github.com/idlesign/django-oauthost
 
 
-*ALPHA STAGE PROJECT. NOT TO BE USED IN PRODUCTION*
-
-
 What's that
 -----------
 
@@ -21,4 +18,7 @@ Requirements
 4. Django Admin site contrib package (for quick oauthost data manipulation).
 
 
-**Documentation**: http://readthedocs.org/docs/django-oauthost/en/latest/
+Documentation
+-------------
+
+http://readthedocs.org/docs/django-oauthost/en/latest/
