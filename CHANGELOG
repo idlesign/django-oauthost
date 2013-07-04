@@ -1,0 +1,24 @@
+v0.1.0
+----
++ Added Py3 support.
++ Added Django 1.5 custom user model support.
+* Fixed auth session flushes in endpoint_authorize issues.
+
+
+v0.0.3
+----
++ Added support for custom URI schemes in redirection endpoints.
+* Fixed Piston auth.
+
+
+v0.0.2
+----
++ API refactored.
++ New `synscopes` management command.
++ Added authentication helper class for Piston.
+* Bearer token type fixes.
+
+
+v0.0.1
+----
++ Basic OAuth 2 functionality.
