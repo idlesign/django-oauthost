@@ -11,12 +11,12 @@ URL_TOKEN = '/token/'
 URL_AUTHORIZE = '/auth/'
 
 
-class OAuthostCLient(TestClient):
+class OAuthostClient(TestClient):
 
     def post(self, path, data={}, **extra):
-        response = super(OAuthostCLient, self).post(path, data=data, **extra)
+        response = super(OAuthostClient, self).post(path, data=data, **extra)
         if path == URL_TOKEN:
-            response.content_json = json.loads(response.content)
+            response.content_json = json.loads(response.content.decode('utf-8'))
         return response
 
 
@@ -35,7 +35,7 @@ def parse_location_header(response, use_uri_fragment=False):
 
 class EndpointTokenCheck(TestCase):
 
-    client_class = OAuthostCLient
+    client_class = OAuthostClient
 
     def test_grant_authorization_code(self):
 
@@ -118,7 +118,7 @@ class EndpointTokenCheck(TestCase):
 
 class EndpointAuthorizeCheck(TestCase):
 
-    client_class = OAuthostCLient
+    client_class = OAuthostClient
 
     def test_auth(self):
 
@@ -140,18 +140,22 @@ class EndpointAuthorizeCheck(TestCase):
         settings.DEBUG = True
 
         # Missing client id.
+        self.client.login(username='Fred', password='12345')
         resp = self.client.get(URL_AUTHORIZE, {'response_type': 'code'})
         self.assertEqual(resp.status_code, 400)
 
         # Missing response type.
+        self.client.login(username='Fred', password='12345')
         resp = self.client.get(URL_AUTHORIZE, {'client_id': '100'})
         self.assertEqual(resp.status_code, 400)
 
         # Wrong response type
+        self.client.login(username='Fred', password='12345')
         resp = self.client.get(URL_AUTHORIZE, {'response_type': 'habrahabr'})
         self.assertEqual(resp.status_code, 400)
 
         # Invalid client id.
+        self.client.login(username='Fred', password='12345')
         resp = self.client.get(URL_AUTHORIZE, {'response_type': 'code', 'client_id': 'invalid'})
         self.assertEqual(resp.status_code, 400)
 
@@ -171,14 +175,17 @@ class EndpointAuthorizeCheck(TestCase):
         redirect_3.save()
 
         # Client 2 - No redirect URI in request.
+        self.client.login(username='Fred', password='12345')
         resp = self.client.get(URL_AUTHORIZE, {'response_type': 'code', 'client_id': client_2.identifier})
         self.assertEqual(resp.status_code, 400)
 
         # Client 2 - Unknown URI in request.
+        self.client.login(username='Fred', password='12345')
         resp = self.client.get(URL_AUTHORIZE, {'response_type': 'code', 'redirect_uri': 'http://noitisnot.com', 'client_id': client_2.identifier})
         self.assertEqual(resp.status_code, 400)
 
         # Valid code request.
+        self.client.login(username='Fred', password='12345')
         resp = self.client.get(URL_AUTHORIZE, {'response_type': 'code', 'client_id': client_1.identifier})
         self.assertEqual(resp.status_code, 200)
 
@@ -188,6 +195,7 @@ class EndpointAuthorizeCheck(TestCase):
         self.assertEqual(parse_location_header(resp)['error'], 'access_denied')
 
         # Again Valid code request.
+        self.client.login(username='Fred', password='12345')
         resp = self.client.get(URL_AUTHORIZE, {'response_type': 'code', 'client_id': client_1.identifier})
         self.assertEqual(resp.status_code, 200)
 
@@ -199,6 +207,7 @@ class EndpointAuthorizeCheck(TestCase):
         # ============= Implicit grant tests.
 
         # Valid token request.
+        self.client.login(username='Fred', password='12345')
         resp = self.client.get(URL_AUTHORIZE, {'response_type': 'token', 'client_id': client_1.identifier})
         self.assertEqual(resp.status_code, 200)
 
@@ -212,7 +221,7 @@ class EndpointAuthorizeCheck(TestCase):
 
 class GrantsCheck(TestCase):
 
-    client_class = OAuthostCLient
+    client_class = OAuthostClient
 
     def test_authorization_code_unsafe(self):
 
@@ -264,6 +273,8 @@ class GrantsCheck(TestCase):
 
         redirect_1 = RedirectionEndpoint(client=client_1, uri='http://redirect-test.com')
         redirect_1.save()
+
+        settings.DEBUG = True
 
         # Logging the user in.
         self.client.login(username='Fred', password='12345')
@@ -331,7 +342,7 @@ class GrantsCheck(TestCase):
         self.assertTrue('access_token' in resp.content_json)
         self.assertTrue('refresh_token' in resp.content_json)
         self.assertTrue('token_type' in resp.content_json)
-        self.assertTrue('expires_in' in resp.content_json)
+        self.assertFalse('expires_in' in resp.content_json)
 
     def test_token_by_client_credentials(self):
 

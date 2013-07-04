@@ -1,3 +1,4 @@
+from django.contrib.auth import SESSION_KEY
 from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseRedirect
 from django.utils import simplejson
@@ -94,7 +95,7 @@ def ep_auth_build_redirect_uri(redirect_base, params, use_uri_fragment):
         redirect_base = '%s#' % redirect_base
     else:
         # SPEC: query component MUST be retained when adding additional query parameters.
-        if '?' not in redirect_base:
+        if redirect_base is None or '?' not in redirect_base:
             redirect_base = '%s?' % redirect_base
     return '%s%s' % (redirect_base, '&'.join(['%s=%s' % (key, value) for key, value in params.items()]))
 
@@ -111,11 +112,7 @@ def ep_auth_response_error(redirect_to, uri_fragment, error_type, description):
 
 def ep_auth_clear_session_data(request):
     """For authorization endpoint. Clears oauth data from session."""
-    del request.session['oauth_client_id']
-    del request.session['oauth_response_type']
-    del request.session['oauth_redirect_uri']
-    del request.session['oauth_scopes_ids']
-    del request.session['oauth_state']
+    request.session[SESSION_KEY] = None
 
 
 def ep_token_response(params, status=200, additional_headers={}):

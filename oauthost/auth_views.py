@@ -6,7 +6,6 @@ from datetime import datetime
 from django.conf import settings
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
-from django.contrib.auth import SESSION_KEY
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
@@ -32,9 +31,6 @@ def endpoint_authorize(request):
     for the authorization endpoint, and MAY support the use of the "POST" method as well.
 
     """
-
-    # Avoid usage of previous auth sessions.
-    request.session[SESSION_KEY] = None
 
     # SPEC: Since requests to the authorization endpoint result in user authentication
     # and the transmission of clear-text credentials (in the HTTP response),
@@ -207,7 +203,7 @@ def endpoint_token(request):
         # Handle client auth through HTTP Basic.
         if auth_method_type == 'Basic':
             try:
-                client_id, client_secret = base64.b64decode(auth_method_value).split(':')
+                client_id, client_secret = base64.b64decode(auth_method_value).decode('utf-8').split(':')
             except Exception:
                 pass
     else:
