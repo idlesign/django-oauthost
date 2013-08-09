@@ -2,6 +2,8 @@ django-oauthost
 ===============
 http://github.com/idlesign/django-oauthost
 
+.. image:: https://pypip.in/d/django-oauthost/badge.png
+        :target: https://crate.io/packages/django-oauthost
 
 What's that
 -----------
