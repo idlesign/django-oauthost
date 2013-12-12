@@ -24,3 +24,7 @@ Documentation
 -------------
 
 http://readthedocs.org/docs/django-oauthost/en/latest/
+
+
+.. image:: https://d2weczhvl823v0.cloudfront.net/idlesign/django-oauthost/trend.png
+        :target: https://bitdeli.com/free
