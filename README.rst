@@ -18,7 +18,7 @@ What's that
 Requirements
 ------------
 
-1. Django 1.3+
+1. Django 1.4+
 2. Auth Django contrib package
 3. South 0.7.1+ for Django (required for version upgrades)
 4. Django Admin site contrib package (for quick oauthost data manipulation).

@@ -4,8 +4,8 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.utils import simplejson
 from django.utils.translation import ugettext_lazy as _
 
-from oauthost.config import *
-from oauthost.models import Scope
+from .models import Scope
+from .settings import TEMPLATE_FORBIDDEN, TEMPLATE_AUTHORIZE_ERROR, REGISTRY_TOKEN_TYPE
 
 
 def filter_input_params(input_params):
@@ -56,10 +56,16 @@ def resolve_scopes_to_apply(scopes_requested, client):
         for scope in scopes:
             scopes_available.append(scope)
 
-    # SPEC: If the issued access token scope is different from the one
-    # requested by the client, the authorization server SHOULD include
-    # the "scope" response parameter to inform the client of the actual
-    # scope granted.
+    '''
+    SPEC:
+
+       The authorization server MAY fully or partially ignore the scope
+       requested by the client, based on the authorization server policy or
+       the resource owner's instructions.  If the issued access token scope
+       is different from the one requested by the client, the authorization
+       server MUST include the "scope" response parameter to inform the
+       client of the actual scope granted.
+    '''
 
     # No scopes requested, and we are giving an access to all scopes available.
     # TODO Needs revision.
@@ -86,7 +92,7 @@ def resolve_scopes_to_apply(scopes_requested, client):
 def ep_auth_response_error_page(request, error_text, http_status=400):
     """For authorization endpoint. Renders a page with error description."""
     data_dict = {'oauthost_title': _('Error'), 'oauthost_error_text': error_text}
-    return render(request, OAUTHOST_TEMPLATE_AUTHORIZE_ERROR, data_dict, status=http_status)
+    return render(request, TEMPLATE_AUTHORIZE_ERROR, data_dict, status=http_status)
 
 
 def ep_auth_build_redirect_uri(redirect_base, params, use_uri_fragment):
@@ -105,9 +111,12 @@ def ep_auth_response(redirect_base, params, use_uri_fragment):
     return HttpResponseRedirect(ep_auth_build_redirect_uri(redirect_base, params, use_uri_fragment))
 
 
-def ep_auth_response_error(redirect_to, uri_fragment, error_type, description):
+def ep_auth_error_redirect(redirect_to, uri_fragment, error_type, description, state):
     """For authorization endpoint. Issues error response."""
-    return ep_auth_response(redirect_to, {'error': error_type, 'error_description': description}, uri_fragment)
+    doc = {'error': error_type, 'error_description': description}
+    if state is not None:
+        doc.update({'state': state})
+    return ep_auth_response(redirect_to, doc, uri_fragment)
 
 
 def ep_auth_clear_session_data(request):
@@ -115,25 +124,29 @@ def ep_auth_clear_session_data(request):
     request.session[SESSION_KEY] = None
 
 
-def ep_token_response(params, status=200, additional_headers={}):
+def ep_token_response(params, status=200, additional_headers=None):
     """For token endpoint. Issues JSON response."""
     response = HttpResponse(content_type='application/json;charset=UTF-8',
         content=simplejson.dumps(params), status=status)
     response['Cache-Control'] = 'no-store'
     response['Pragma'] = 'no-cache'
+    if additional_headers is None:
+        additional_headers = {}
     for key, value in additional_headers.items():
         response[key] = value
     return response
 
 
-def ep_token_response_error(error_type, description, status=400, additional_headers={}):
+def ep_token_error_redirect(error_type, description, status=400, additional_headers=None):
     """For token endpoint. Issues JSON error response."""
+    if additional_headers is None:
+        additional_headers = {}
     return ep_token_response({'error': error_type, 'error_description': description}, status, additional_headers)
 
 
 def forbidden_error_response(request):
     """Renders `forbidden` page."""
-    return render(request, OAUTHOST_TEMPLATE_FORBIDDEN, {'oauthost_title': _('Access Denied')}, status=403)
+    return render(request, TEMPLATE_FORBIDDEN, {'oauthost_title': _('Access Denied')}, status=403)
 
 
 def auth_handler_response(request, scope=None):

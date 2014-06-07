@@ -10,7 +10,7 @@ from django.utils.translation import ugettext_lazy as _
 class BearerAuthHandler():
     """Handles Bearer token authentication calls.
 
-    SPEC: http://tools.ietf.org/html/draft-ietf-oauth-v2-bearer
+    SPEC: http://tools.ietf.org/html/rfc6750
 
     """
 
@@ -86,7 +86,7 @@ class BearerAuthHandler():
     def prepare_response(self):
 
         if self._error is not None:
-            from oauthost.config import OAUTHOST_TEMPLATE_RESTRICTED
+            from .settings import TEMPLATE_RESTRICTED
 
             errors = {
                 'invalid_request': (400, 'Request is malformed. Check request parameters validity.'),
@@ -100,7 +100,7 @@ class BearerAuthHandler():
             }
             additional_params = ',' . join( [ '%s="%s"' % (i[0], i[1]) for i in additional_params.items() ]  )
             context = RequestContext(self._request)
-            self._response = HttpResponse(content=loader.render_to_string(OAUTHOST_TEMPLATE_RESTRICTED,
+            self._response = HttpResponse(content=loader.render_to_string(TEMPLATE_RESTRICTED,
                     {'oauthost_title': _('Access Restricted')}, context), status=current_error[0])
             self._response['WWW-Authenticate'] = 'Bearer %s' % additional_params
 

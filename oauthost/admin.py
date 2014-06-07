@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from oauthost.models import Client, RedirectionEndpoint, AuthorizationCode, Scope, Token
+from .models import Client, RedirectionEndpoint, AuthorizationCode, Scope, Token
 
 
 class AuthorizationCodeInlineAdmin(admin.TabularInline):

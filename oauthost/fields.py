@@ -3,7 +3,7 @@ from django.db import models
 from django.conf import settings
 
 
-# This allows South to handle our custom 'CharFieldNullable' field.
+# This allows South to handle our custom 'URLSchemeField' field.
 if 'south' in settings.INSTALLED_APPS:
     from south.modelsinspector import add_introspection_rules
 
