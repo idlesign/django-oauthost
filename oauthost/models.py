@@ -1,6 +1,7 @@
 from uuid import uuid4
 from random import randrange
 
+from django import VERSION
 from django.db import models, IntegrityError
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.auth.models import User
@@ -8,10 +9,11 @@ from django.contrib.auth.models import User
 from oauthost.config import *
 from oauthost.fields import URLSchemeField
 
-import django
-if django.VERSION >= (1,5):
+
+if VERSION >= (1,5):
     from django.contrib.auth import get_user_model
     User = get_user_model()
+
 
 class Scope(models.Model):
 
