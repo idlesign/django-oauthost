@@ -2,6 +2,9 @@ django-oauthost
 ===============
 http://github.com/idlesign/django-oauthost
 
+.. image:: https://badge.fury.io/py/django-oauthost.png
+    :target: http://badge.fury.io/py/django-oauthost
+
 .. image:: https://pypip.in/d/django-oauthost/badge.png
         :target: https://crate.io/packages/django-oauthost
 
@@ -23,4 +26,4 @@ Requirements
 Documentation
 -------------
 
-http://readthedocs.org/docs/django-oauthost/en/latest/
+http://django-oauthost.readthedocs.org/
