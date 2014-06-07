@@ -1,4 +1,9 @@
-from django.conf.urls.defaults import patterns, url
+try:
+    from django.conf.urls.defaults import patterns, url
+except ImportError:
+    # For Django 1.6
+    from django.conf.urls import patterns, url
+
 
 urlpatterns = patterns('oauthost',
     url(r'^auth/$', 'auth_views.endpoint_authorize', name='oauthost_authorize'),
