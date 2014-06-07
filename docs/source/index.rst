@@ -3,10 +3,6 @@ django-oauthost documentation
 
 *django-oauthost is a reusable application for Django, introducing OAuth2 server functionality.*
 
-.. warning::
-
-    Alpha stage project - not to be used in production.
-
 
 Requirements
 ------------
@@ -65,8 +61,8 @@ https://www.transifex.net/projects/p/django-oauthost/.
 for the others — publish it.
 
 
-The tip
--------
+Also
+----
 
 If the application is not what you want for site navigation, you might be interested in considering
 other choices at http://djangopackages.com/grids/g/oauth-servers/
