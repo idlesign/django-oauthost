@@ -26,4 +26,4 @@ Requirements
 Documentation
 -------------
 
-http://django-oauthost.readthedocs.org/
+http://readthedocs.org/docs/django-oauthost/en/latest/
