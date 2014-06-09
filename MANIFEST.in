@@ -1,9 +1,13 @@
 include README.rst
+include AUTHORS
 include LICENSE
 include CHANGELOG
+
 include docs/Makefile
 recursive-include docs .rst
 recursive-include docs .py
+
 recursive-include oauthost/locale *
 recursive-include oauthost/migrations *
+recursive-include oauthost/management *
 recursive-include oauthost/templates *

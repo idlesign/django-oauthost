@@ -1,18 +1,31 @@
+django-oauthost changelog
+=========================
+
+v0.2.0
+------
++ API refactored.
++ Implemented advanced scopes handling.
++ Added Scope status.
++ toolbox.register_client() is implemented.
+* Fixed Django 1.6 import error in urls.py.
+* `authorization_code` grant type now copies token scopes from code.
+
+
 v0.1.0
-----
+------
 + Added Py3 support.
 + Added Django 1.5 custom user model support.
 * Fixed auth session flushes in endpoint_authorize issues.
 
 
 v0.0.3
-----
+------
 + Added support for custom URI schemes in redirection endpoints.
 * Fixed Piston auth.
 
 
 v0.0.2
-----
+------
 + API refactored.
 + New `synscopes` management command.
 + Added authentication helper class for Piston.
@@ -20,5 +33,5 @@ v0.0.2
 
 
 v0.0.1
-----
+------
 + Basic OAuth 2 functionality.
