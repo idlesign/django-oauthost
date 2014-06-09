@@ -26,9 +26,10 @@ class ClientAdmin(admin.ModelAdmin):
 
 
 class ScopeAdmin(admin.ModelAdmin):
-    list_display = ('title', 'identifier')
+    list_display = ('title', 'identifier', 'status')
     list_display_links = ('title',)
     search_fields = ('title', 'identifier')
+    list_filter = ('status',)
 
 
 class TokenAdmin(admin.ModelAdmin):

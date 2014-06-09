@@ -1,10 +1,11 @@
+import json
+
 from django.test import TestCase
-from django.utils import simplejson as json
 from django.test.client import Client as TestClient
 from django.contrib.auth.models import User
 from django.conf import settings
 
-from oauthost.models import AuthorizationCode, Token, Client, RedirectionEndpoint
+from oauthost.models import AuthorizationCode, Token, Client, RedirectionEndpoint, Scope
 
 
 URL_TOKEN = '/token/'
@@ -13,7 +14,7 @@ URL_AUTHORIZE = '/auth/'
 
 class OAuthostClient(TestClient):
 
-    def post(self, path, data={}, **extra):
+    def post(self, path, data=None, **extra):
         response = super(OAuthostClient, self).post(path, data=data, **extra)
         if path == URL_TOKEN:
             response.content_json = json.loads(response.content.decode('utf-8'))
@@ -62,45 +63,47 @@ class EndpointTokenCheck(TestCase):
         code_1 = AuthorizationCode(user=user_1, client=client_1, uri=redirect_1.uri)
         code_1.save()
 
+        Scope(identifier='scope1').save()
+
         # Missing client authentication data.
-        resp = self.client.post(URL_TOKEN, {'grant_type': 'authorization_code'})
+        resp = self.client.post(URL_TOKEN, {'grant_type': 'authorization_code', 'scope': 'scope1'})
         self.assertEqual(resp.status_code, 401)
         self.assertEqual(resp.content_json['error'], 'invalid_client')
 
         # Missing all required params.
-        resp = self.client.post(URL_TOKEN, {'grant_type': 'authorization_code', 'client_id': client_1.identifier,
+        resp = self.client.post(URL_TOKEN, {'grant_type': 'authorization_code', 'scope': 'scope1', 'client_id': client_1.identifier,
                                              'client_secret': client_1.password})
         self.assertEqual(resp.status_code, 400)
         self.assertEqual(resp.content_json['error'], 'invalid_request')
 
         # Missing redirect URI.
-        resp = self.client.post(URL_TOKEN, {'grant_type': 'authorization_code', 'code': 'wrong_code',
+        resp = self.client.post(URL_TOKEN, {'grant_type': 'authorization_code', 'scope': 'scope1', 'code': 'wrong_code',
                                              'client_id': client_1.identifier, 'client_secret': client_1.password})
         self.assertEqual(resp.status_code, 400)
         self.assertEqual(resp.content_json['error'], 'invalid_request')
 
         # Missing code.
-        resp = self.client.post(URL_TOKEN, {'grant_type': 'authorization_code', 'redirect_uri': 'http://wrong-url.com',
+        resp = self.client.post(URL_TOKEN, {'grant_type': 'authorization_code', 'scope': 'scope1', 'redirect_uri': 'http://wrong-url.com',
                                              'client_id': client_1.identifier, 'client_secret': client_1.password})
         self.assertEqual(resp.status_code, 400)
         self.assertEqual(resp.content_json['error'], 'invalid_request')
 
         # Wrong code.
-        resp = self.client.post(URL_TOKEN, {'grant_type': 'authorization_code', 'code': 'invalid',
+        resp = self.client.post(URL_TOKEN, {'grant_type': 'authorization_code', 'scope': 'scope1', 'code': 'invalid',
                                              'redirect_uri': 'http://localhost:8000/abc/',
                                              'client_id': client_1.identifier, 'client_secret': client_1.password})
         self.assertEqual(resp.status_code, 400)
         self.assertEqual(resp.content_json['error'], 'invalid_grant')
 
         # Wrong URI.
-        resp = self.client.post(URL_TOKEN, {'grant_type': 'authorization_code', 'code': code_1.code,
+        resp = self.client.post(URL_TOKEN, {'grant_type': 'authorization_code', 'scope': 'scope1', 'code': code_1.code,
                                              'redirect_uri': 'http://wrong-url.com/', 'client_id': client_1.identifier,
                                              'client_secret': client_1.password})
         self.assertEqual(resp.status_code, 400)
         self.assertEqual(resp.content_json['error'], 'invalid_grant')
 
         # Valid call for a token.
-        resp = self.client.post(URL_TOKEN, {'grant_type': 'authorization_code', 'code': code_1.code,
+        resp = self.client.post(URL_TOKEN, {'grant_type': 'authorization_code', 'scope': 'scope1', 'code': code_1.code,
                                              'redirect_uri': redirect_1.uri, 'client_id': client_1.identifier,
                                              'client_secret': client_1.password})
         self.assertEqual(resp.status_code, 200)
@@ -109,7 +112,7 @@ class EndpointTokenCheck(TestCase):
         self.assertTrue('token_type' in resp.content_json)
 
         # An additional call for code issues token and code invalidation.
-        resp = self.client.post(URL_TOKEN, {'grant_type': 'authorization_code', 'code': '1234567',
+        resp = self.client.post(URL_TOKEN, {'grant_type': 'authorization_code', 'scope': 'scope1', 'code': '1234567',
                                              'redirect_uri': 'http://localhost:8000/abc/',
                                              'client_id': client_1.identifier, 'client_secret': client_1.password})
         self.assertEqual(resp.status_code, 400)
@@ -139,26 +142,6 @@ class EndpointAuthorizeCheck(TestCase):
         self.assertEqual(resp.status_code, 403)
         settings.DEBUG = True
 
-        # Missing client id.
-        self.client.login(username='Fred', password='12345')
-        resp = self.client.get(URL_AUTHORIZE, {'response_type': 'code'})
-        self.assertEqual(resp.status_code, 400)
-
-        # Missing response type.
-        self.client.login(username='Fred', password='12345')
-        resp = self.client.get(URL_AUTHORIZE, {'client_id': '100'})
-        self.assertEqual(resp.status_code, 400)
-
-        # Wrong response type
-        self.client.login(username='Fred', password='12345')
-        resp = self.client.get(URL_AUTHORIZE, {'response_type': 'habrahabr'})
-        self.assertEqual(resp.status_code, 400)
-
-        # Invalid client id.
-        self.client.login(username='Fred', password='12345')
-        resp = self.client.get(URL_AUTHORIZE, {'response_type': 'code', 'client_id': 'invalid'})
-        self.assertEqual(resp.status_code, 400)
-
         client_1 = Client(user=user_1, title='OClient', identifier='cl012345')
         client_1.save()
 
@@ -174,19 +157,45 @@ class EndpointAuthorizeCheck(TestCase):
         redirect_3 = RedirectionEndpoint(client=client_2, uri='http://redirect-test2.com')
         redirect_3.save()
 
+        Scope(identifier='scope1').save()
+
+        # Missing client id.
+        self.client.login(username='Fred', password='12345')
+        resp = self.client.get(URL_AUTHORIZE, {'response_type': 'code', 'scope': 'scope1'})
+        self.assertEqual(resp.status_code, 400)
+
+        # Invalid client id.
+        self.client.login(username='Fred', password='12345')
+        resp = self.client.get(URL_AUTHORIZE, {'response_type': 'code', 'scope': 'scope1', 'client_id': 'invalid'})
+        self.assertEqual(resp.status_code, 400)
+
         # Client 2 - No redirect URI in request.
         self.client.login(username='Fred', password='12345')
-        resp = self.client.get(URL_AUTHORIZE, {'response_type': 'code', 'client_id': client_2.identifier})
+        resp = self.client.get(URL_AUTHORIZE, {'response_type': 'code', 'scope': 'scope1', 'client_id': client_2.identifier})
         self.assertEqual(resp.status_code, 400)
 
         # Client 2 - Unknown URI in request.
         self.client.login(username='Fred', password='12345')
-        resp = self.client.get(URL_AUTHORIZE, {'response_type': 'code', 'redirect_uri': 'http://noitisnot.com', 'client_id': client_2.identifier})
+        resp = self.client.get(URL_AUTHORIZE, {'response_type': 'code', 'scope': 'scope1', 'redirect_uri': 'http://noitisnot.com', 'client_id': client_2.identifier})
         self.assertEqual(resp.status_code, 400)
+
+        # Missing response type.
+        self.client.login(username='Fred', password='12345')
+        resp = self.client.get(URL_AUTHORIZE, {'client_id': client_1.identifier, 'state': 'abc', 'scope': 'scope1'})
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(parse_location_header(resp)['error'], 'unsupported_response_type')
+        self.assertEqual(parse_location_header(resp)['state'], 'abc')
+
+        # Wrong response type
+        self.client.login(username='Fred', password='12345')
+        resp = self.client.get(URL_AUTHORIZE, {'client_id': client_1.identifier, 'response_type': 'habrahabr', 'state': 'abc', 'scope': 'scope1'})
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(parse_location_header(resp)['error'], 'unsupported_response_type')
+        self.assertEqual(parse_location_header(resp)['state'], 'abc')
 
         # Valid code request.
         self.client.login(username='Fred', password='12345')
-        resp = self.client.get(URL_AUTHORIZE, {'response_type': 'code', 'client_id': client_1.identifier})
+        resp = self.client.get(URL_AUTHORIZE, {'response_type': 'code', 'scope': 'scope1', 'state': 'somestate', 'client_id': client_1.identifier})
         self.assertEqual(resp.status_code, 200)
 
         # User declines auth.
@@ -196,19 +205,20 @@ class EndpointAuthorizeCheck(TestCase):
 
         # Again Valid code request.
         self.client.login(username='Fred', password='12345')
-        resp = self.client.get(URL_AUTHORIZE, {'response_type': 'code', 'client_id': client_1.identifier})
+        resp = self.client.get(URL_AUTHORIZE, {'response_type': 'code', 'scope': 'scope1', 'state': 'somestatetwo', 'client_id': client_1.identifier})
         self.assertEqual(resp.status_code, 200)
 
         # User confirms auth.
         resp = self.client.post(URL_AUTHORIZE, {'auth_decision': 'is_made', 'confirmed': 'yes'})
         self.assertEqual(resp.status_code, 302)
         self.assertIn('code', parse_location_header(resp))
+        self.assertEqual(parse_location_header(resp)['state'], 'somestatetwo')
 
         # ============= Implicit grant tests.
 
         # Valid token request.
         self.client.login(username='Fred', password='12345')
-        resp = self.client.get(URL_AUTHORIZE, {'response_type': 'token', 'client_id': client_1.identifier})
+        resp = self.client.get(URL_AUTHORIZE, {'response_type': 'token', 'scope': 'scope1', 'state': 'some_state_three', 'client_id': client_1.identifier})
         self.assertEqual(resp.status_code, 200)
 
         # User confirms token grant.
@@ -217,6 +227,7 @@ class EndpointAuthorizeCheck(TestCase):
         params = parse_location_header(resp, True)
         self.assertIn('access_token', params)
         self.assertIn('token_type', params)
+        self.assertEqual(params['state'], 'some_state_three')
 
 
 class GrantsCheck(TestCase):
@@ -235,11 +246,13 @@ class GrantsCheck(TestCase):
         redirect_1 = RedirectionEndpoint(client=client_1, uri='http://redirect-test.com')
         redirect_1.save()
 
+        Scope(identifier='scope1').save()
+
         # Logging the user in.
         self.client.login(username='Fred', password='12345')
 
         # Valid code request.
-        resp = self.client.get(URL_AUTHORIZE, {'response_type': 'code', 'client_id': client_1.identifier})
+        resp = self.client.get(URL_AUTHORIZE, {'response_type': 'code', 'scope': 'scope1', 'client_id': client_1.identifier})
         self.assertEqual(resp.status_code, 200)
 
         # User confirms auth.
@@ -252,7 +265,7 @@ class GrantsCheck(TestCase):
         code = params['code']
 
         # Valid token by code request.
-        resp = self.client.post(URL_TOKEN, {'grant_type': 'authorization_code', 'code': code,
+        resp = self.client.post(URL_TOKEN, {'grant_type': 'authorization_code', 'scope': 'scope1', 'code': code,
                                              'redirect_uri': redirect_1.uri,
                                              'client_id': client_1.identifier,
                                              'client_secret': client_1.password})
@@ -279,8 +292,10 @@ class GrantsCheck(TestCase):
         # Logging the user in.
         self.client.login(username='Fred', password='12345')
 
+        Scope(identifier='scope1').save()
+
         # Valid code request.
-        resp = self.client.get(URL_AUTHORIZE, {'response_type': 'code', 'client_id': client_1.identifier})
+        resp = self.client.get(URL_AUTHORIZE, {'response_type': 'code', 'scope': 'scope1', 'client_id': client_1.identifier})
         self.assertEqual(resp.status_code, 200)
 
         # User confirms auth.
@@ -302,13 +317,66 @@ class GrantsCheck(TestCase):
 
         # Valid token by code request.
         # HTTP Basic data - OClient:cl012345 --> T0NsaWVudDpjbDAxMjM0NQ==
-        resp = self.client.post(URL_TOKEN, {'grant_type': 'authorization_code', 'code': code,
+        resp = self.client.post(URL_TOKEN, {'grant_type': 'authorization_code', 'scope': 'scope1', 'code': code,
                                              'redirect_uri': redirect_1.uri},
                                 Authorization='Basic T0NsaWVudDpjbDAxMjM0NQ==')
         self.assertEqual(resp.status_code, 200)
         self.assertTrue('access_token' in resp.content_json)
         self.assertTrue('refresh_token' in resp.content_json)
         self.assertTrue('token_type' in resp.content_json)
+
+    def test_scope(self):
+
+        settings.DEBUG = True
+
+        user_1 = User(username='Fred')
+        user_1.set_password('12345')
+        user_1.save()
+
+        client_1 = Client(user=user_1, title='OClient1', identifier='OClient', password='cl012345')
+        client_1.save()
+
+        # Scope is missing.
+        resp = self.client.post(URL_TOKEN, {'grant_type': 'password', 'username': 'Fred', 'password': '12345'}, Authorization='Basic T0NsaWVudDpjbDAxMjM0NQ==')
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.content_json['error'], 'invalid_scope')
+
+        # No scope supported by server.
+        resp = self.client.post(URL_TOKEN, {'grant_type': 'password', 'username': 'Fred', 'password': '12345', 'scope': 'my scope'}, Authorization='Basic T0NsaWVudDpjbDAxMjM0NQ==')
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.content_json['error'], 'invalid_scope')
+
+        scope1 = Scope(identifier='scope1')
+        scope1.save()
+        scope2 = Scope(identifier='scope2')
+        scope2.save()
+        scope3 = Scope(identifier='scope3', status=Scope.STATUS_DISABLED)
+        scope3.save()
+
+        client_2 = Client(user=user_1, title='OClien2', identifier='OClient2', password='cl012345')
+        client_2.save()
+        client_2.scopes.add(scope2)
+
+        # Unsupported (or disabled) client scope request.
+        resp = self.client.post(URL_TOKEN, {'grant_type': 'password', 'username': 'Fred', 'password': '12345', 'scope': 'scope1 scope2'}, Authorization='Basic T0NsaWVudDI6Y2wwMTIzNDU=')
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.content_json['error'], 'invalid_scope')
+
+        # Unsupported (or disabled) server scope request.
+        resp = self.client.post(URL_TOKEN, {'grant_type': 'password', 'username': 'Fred', 'password': '12345', 'scope': 'scope1 scope3'}, Authorization='Basic T0NsaWVudDpjbDAxMjM0NQ==')
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.content_json['error'], 'invalid_scope')
+
+        # Unsupported scope request.
+        resp = self.client.post(URL_TOKEN, {'grant_type': 'password', 'username': 'Fred', 'password': '12345', 'scope': 'scope1'}, Authorization='Basic T0NsaWVudDpjbDAxMjM0NQ==')
+        # print('****' * 20)
+        # print(resp.content_json['error_description'])
+        # print('****' * 20)
+        self.assertEqual(resp.status_code, 200)
+        self.assertTrue('access_token' in resp.content_json)
+        self.assertTrue('refresh_token' in resp.content_json)
+        self.assertTrue('token_type' in resp.content_json)
+        self.assertEqual(resp.content_json['scope'], 'scope1')
 
     def test_token_by_user_credentials(self):
 
@@ -322,19 +390,21 @@ class GrantsCheck(TestCase):
         redirect_1 = RedirectionEndpoint(client=client_1, uri='http://redirect-test.com')
         redirect_1.save()
 
+        Scope(identifier='scope1').save()
+
         # Missing params.
-        resp = self.client.post(URL_TOKEN, {'grant_type': 'password'}, Authorization='Basic T0NsaWVudDpjbDAxMjM0NQ==')
+        resp = self.client.post(URL_TOKEN, {'grant_type': 'password', 'scope': 'scope1'}, Authorization='Basic T0NsaWVudDpjbDAxMjM0NQ==')
         self.assertEqual(resp.status_code, 400)
         self.assertEqual(resp.content_json['error'], 'invalid_request')
 
         # Invalid params.
-        resp = self.client.post(URL_TOKEN, {'grant_type': 'password', 'username': 'FalseUser', 'password': 'FalsePassword'},
+        resp = self.client.post(URL_TOKEN, {'grant_type': 'password', 'scope': 'scope1', 'username': 'FalseUser', 'password': 'FalsePassword'},
                                 Authorization='Basic T0NsaWVudDpjbDAxMjM0NQ==')
         self.assertEqual(resp.status_code, 400)
         self.assertEqual(resp.content_json['error'], 'invalid_grant')
 
         # Valid token by password request.
-        resp = self.client.post(URL_TOKEN, {'grant_type': 'password', 'username': 'Fred',
+        resp = self.client.post(URL_TOKEN, {'grant_type': 'password', 'scope': 'scope1', 'username': 'Fred',
                                              'password': '12345'},
                                 Authorization='Basic T0NsaWVudDpjbDAxMjM0NQ==')
 
@@ -356,8 +426,10 @@ class GrantsCheck(TestCase):
         redirect_1 = RedirectionEndpoint(client=client_1, uri='http://redirect-test.com')
         redirect_1.save()
 
+        Scope(identifier='scope1').save()
+
         # Valid token by client credentials request.
-        resp = self.client.post(URL_TOKEN, {'grant_type': 'client_credentials'},
+        resp = self.client.post(URL_TOKEN, {'grant_type': 'client_credentials', 'scope': 'scope1'},
                                 Authorization='Basic T0NsaWVudDpjbDAxMjM0NQ==')
 
         self.assertEqual(resp.status_code, 200)

@@ -12,7 +12,7 @@ Oauthost comes with an authentication class for Piston resources.
 Piston resource view creation example::
 
     from piston.resource import Resource
-    from oauthost.utils import PistonAuthHelper
+    from oauthost.toolbox import PistonAuthHelper
 
     my_resource_view = Resource(MyResourceHandler, authentication=PistonAuthHelper('my_resource:my_scope'))
 

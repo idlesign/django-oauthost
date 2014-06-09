@@ -16,39 +16,47 @@ Preparations
    ``python manage.py migrate``
 
 
-1. Attach `oauthost.urls` to project `urls`.
+1. Attach `oauthost.urls` to project `urls` (in `urls.py`)::
+
+        from oauthost.urls import urlpatterns as oauthost_urlpatterns
+
+        urlpatterns = ...  # Your actual urlpatterns are ommited.
+
+        urlpatterns += oauthost_urlpatterns
 
     Authorization endpoint would be available at `{ BASE_URL }auth/`.
 
     Token endpoint would be available at `{ BASE_URL }token/`.
 
-2. Decorate application views which require OAuth 2 authorization with `oauth_required`::
+2. Decorate application views which require OAuth 2 authorization with `oauth_required` (let's suppose those are views from `polls` application)::
 
-    @oauth_required(scope='my_articles_app:my_summary')
-    def summary(request, article_id):
-        """Scope associated with this view is `my_articles_app:my_summary`."""
+    from oauthost.decorators import oauth_required
+
+    @oauth_required(scope='my_polls:my_stats')
+    def stats(request, poll_id):
+        """Scope associated with this view is `my_polls:my_stats`."""
         ...
 
     @oauth_required(scope_auto=True)
     def results(request, poll_id):
-        """Scope for this view would be evaluated to `polls:results` if this view is in `polls` app."""
+        """Scope for this view would be evaluated to `polls:results`."""
         ...
 
 3. Use Django's Admin site contrib package to manipulate oauthost data (e.g. register clients).
 
     3.1. Register *scopes* for your Django application.
 
-    Scope identifiers might be, e.g.: `polls:index`, `polls:detail`, `polls:results`.
+    Scope identifiers examples: `polls:index`, `polls:detail`, `polls:results`.
 
     .. note::
 
-        You can also use ``syncscopes`` management command which automatically creates
-        scopes for `oauth_required` decorated views available in application(s) which
+        You can use ``syncscopes`` management command which automatically creates
+        scopes for `oauth_required` decorated views available in application(s), which
         names are passed to the command::
 
             python manage.py syncscopes polls
 
-    3.2. Register *client* which could be granted with access to your resources.
+    3.2. Register a **client** which could be granted with access to your resources.
 
     .. note::
 
