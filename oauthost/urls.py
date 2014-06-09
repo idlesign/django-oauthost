@@ -6,7 +6,7 @@ except ImportError:
 
 
 urlpatterns = patterns('oauthost',
-    url(r'^auth/$', 'auth_views.endpoint_authorize', name='oauthost_authorize'),
+    url(r'^auth/$', 'views.endpoint_authorize', name='oauthost_authorize'),
     # SPEC: The [token] endpoint URI MUST NOT include a fragment component.
-    url(r'^token/$', 'auth_views.endpoint_token', name='oauthost_token'),
+    url(r'^token/$', 'views.endpoint_token', name='oauthost_token'),
 )

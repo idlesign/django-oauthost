@@ -3,7 +3,6 @@ from django.contrib.auth.decorators import login_required
 
 from .endpoints import AuthorizeEndpoint, TokenEndpoint
 
-#todo rename views.py
 
 @login_required
 def endpoint_authorize(request):
