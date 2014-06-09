@@ -20,8 +20,17 @@ if VERSION >= (1, 5):
 @python_2_unicode_compatible
 class Scope(models.Model):
 
+    STATUS_ENABLED = 1
+    STATUS_DISABLED = 2
+
+    STATUS_CHOICES = (
+        (STATUS_ENABLED, _('Enabled')),
+        (STATUS_DISABLED, _('Disabled')),
+    )
+
     identifier = models.CharField(_('Scope ID'), max_length=100, help_text=_('Scope identifier.'), unique=True)
     title = models.CharField(_('Scope title'), max_length=250, help_text=_('Scope humanfriendly name.'))
+    status = models.PositiveIntegerField(_('Status'), db_index=True, choices=STATUS_CHOICES, default=STATUS_ENABLED)
 
     class Meta:
         verbose_name = _('Scope')
