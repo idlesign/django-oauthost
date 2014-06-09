@@ -14,7 +14,7 @@ What's that
 
 *django-oauthost is a reusable application for Django, introducing OAuth2 server.*
 
-It allows to guard your applications views with OAuth 2.0 in quite a trivial way.
+It allows to guard your application views with OAuth 2.0 in quite a trivial way.
 
 1. Register your client using Django Admin or API::
 
@@ -23,7 +23,7 @@ It allows to guard your applications views with OAuth 2.0 in quite a trivial way
     ...
 
     # Define some scopes to restrict our client to.
-    my_scopes = ['polls:vote', 'polls:stats']
+    my_scopes = ['polls:vote']
 
     # `user` might be `request.user` if in a view.
     register_client('My OAuth Client', 'my_client', user, scopes_list=my_scopes)
@@ -33,10 +33,6 @@ It allows to guard your applications views with OAuth 2.0 in quite a trivial way
 2. Decorate your views with `oauth_required` (suppose in `polls.views`)::
 
     from oauthost.decorators import oauth_required
-
-    @oauth_required(scope_auto=True)
-    def stats(request, poll_id):
-        ...
 
     @oauth_required(scope_auto=True)
     def vote(request, poll_id, variant_id):
@@ -51,9 +47,9 @@ It allows to guard your applications views with OAuth 2.0 in quite a trivial way
 
         urlpatterns += oauthost_urlpatterns
 
-    After that authorization endpoint is available at `{ BASE_URL }auth/`.
+   After that authorization endpoint is available at `{ BASE_URL }auth/`.
 
-    Token endpoint is available at `{ BASE_URL }token/`.
+   Token endpoint is available at `{ BASE_URL }token/`.
 
 
 That's all for **oauthost**, connect using your client.
