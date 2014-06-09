@@ -8,7 +8,27 @@ Quick start
     if check fails.
 
 
-Preparations
+Check list
+----------
+
+* Do not use Django's brand new cookie-based session engine with oauthost, it may cause security issues.
+* Do not use OAuth1 clients as they probably won't work.
+* MIDDLEWARE_CLASSES has
+
+  `django.contrib.sessions.middleware.SessionMiddleware`
+
+  `django.middleware.csrf.CsrfViewMiddleware`
+
+* TEMPLATE_CONTEXT_PROCESSORS has
+
+  `django.core.context_processors.request`
+
+* INSTALLED_APPS has
+
+  `oauthost`
+
+
+Step by step
 ------------
 
 0. Initialize DB tables for oauthost, run from command line:
@@ -24,9 +44,9 @@ Preparations
 
         urlpatterns += oauthost_urlpatterns
 
-    Authorization endpoint would be available at `{ BASE_URL }auth/`.
+    Authorization endpoint is available at `{ BASE_URL }auth/`.
 
-    Token endpoint would be available at `{ BASE_URL }token/`.
+    Token endpoint is available at `{ BASE_URL }token/`.
 
 2. Decorate application views which require OAuth 2 authorization with `oauth_required` (let's suppose those are views from `polls` application)::
 
@@ -63,6 +83,21 @@ Preparations
         Just right there on client registration page you can set up redirection endpoints,
         register authorization codes and issue tokens. Latter two should normally be
         issued to client itself as described in paragraph no 4.
+
+
+    Or use API::
+
+        from oauthost.toolbox import register_client
+
+        ...
+
+        # Define some scopes to restrict our client to.
+        my_scopes = ['polls:vote', 'polls:stats']
+
+        # `user` might be `request.user` if in a view.
+        register_client('My OAuth Client', 'my_client', user, scopes_list=my_scopes)
+
+        ...
 
 
 Tokens and protected resources

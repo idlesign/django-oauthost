@@ -5,7 +5,9 @@ from django.test.client import Client as TestClient
 from django.contrib.auth.models import User
 from django.conf import settings
 
-from oauthost.models import AuthorizationCode, Token, Client, RedirectionEndpoint, Scope
+from .models import AuthorizationCode, Token, Client, RedirectionEndpoint, Scope
+from .toolbox import register_client
+from .exceptions import OauthostException
 
 
 URL_TOKEN = '/token/'
@@ -32,6 +34,33 @@ def parse_location_header(response, use_uri_fragment=False):
         key, value = part.split('=')
         parsed[key] = value
     return parsed
+
+
+class ToolboxCheck(TestCase):
+
+    def test_register_client(self):
+        user = User(username='Fred')
+        user.set_password('12345')
+        user.save()
+
+        scope1 = Scope(identifier='scope1')
+        scope1.save()
+
+        cl = register_client('client1_title', 'client1', user)
+        self.assertEqual(cl.identifier, 'client1')
+        self.assertEqual(cl.title, 'client1_title')
+        self.assertEqual(cl.user, user)
+
+        self.assertRaises(OauthostException, register_client, 'client2_title', 'client2', user, scopes_list=[scope1, 'scope2'], register_unknown_scopes=False)
+
+        cl = register_client('client2_title', 'client2', user, scopes_list=[scope1, 'scope2'], token_lifetime=300, public=False, client_params={'description': 'client2_decr'})
+        self.assertEqual(cl.identifier, 'client2')
+        self.assertEqual(cl.title, 'client2_title')
+        self.assertEqual(cl.token_lifetime, 300)
+        self.assertEqual(cl.user, user)
+        self.assertEqual(cl.description, 'client2_decr')
+        self.assertNotEqual(cl.type, Client.TYPE_PUBLIC)
+        self.assertEqual(len(cl.scopes.all()), 2)
 
 
 class EndpointTokenCheck(TestCase):

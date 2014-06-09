@@ -104,7 +104,7 @@ class Client(models.Model):
 
     date_registered = models.DateTimeField(_('Registered at'), auto_now_add=True)
     title = models.CharField(_('Title'), max_length=100, unique=True)
-    user = models.ForeignKey(User, verbose_name=_('User'), help_text=_('User that registered this client.'))
+    user = models.ForeignKey(User, verbose_name=_('Registrant'), help_text=_('User who registered this client.'))
     description = models.TextField(_('Description'), max_length=100)
     link = models.URLField(_('URL'), help_text=_('Application webpage URL.'), null=True, blank=True)
     identifier = models.CharField(_('Identifier'), max_length=250, help_text=_('Public client identifier. <i>Generated automatically if empty.</i>.'), unique=True, blank=True)

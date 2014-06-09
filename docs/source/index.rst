@@ -3,34 +3,17 @@ django-oauthost documentation
 
 *django-oauthost is a reusable application for Django, introducing OAuth2 server functionality.*
 
+It allows to guard your applications views with OAuth 2.0 in quite a trivial way.
+
 
 Requirements
 ------------
 
-1. Django 1.4+
-2. Auth Django contrib package
-3. South 0.7.1+ for Django (required for version upgrades)
-4. Django Admin site contrib package (for quick oauthost data manipulation).
-
-
-Check list
-----------
-
-* Do not use Django's brand new cookie-based session engine with oauthost, it may cause security issues.
-* Do not use OAuth1 clients as they probably won't work.
-* MIDDLEWARE_CLASSES has
-
-  `django.contrib.sessions.middleware.SessionMiddleware`
-
-  `django.middleware.csrf.CsrfViewMiddleware`
-
-* TEMPLATE_CONTEXT_PROCESSORS has
-
-  `django.core.context_processors.request`
-
-* INSTALLED_APPS has
-
-  `oauthost`
+1. Python 2.7+, 3.2+
+2. Django 1.4+
+3. Auth Django contrib package
+4. South 0.7.1+ for Django (required for version upgrades)
+5. Django Admin site contrib package (for oauthost data manipulation).
 
 
 Table of Contents
