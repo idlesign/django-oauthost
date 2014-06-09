@@ -403,7 +403,7 @@ class TokenEndpoint(EndpointBase):
         """Returns token object for a given grant type."""
 
         filtered_scopes = []
-        if grant_type != 'refresh_token':  # For refresh we use initially granted scope.
+        if grant_type not in ('refresh_token', 'authorization_code'):  # For refresh we use initially granted scope.
             try:
                 filtered_scopes = self.filter_scopes(client)
             except ScopeException as e:
@@ -452,7 +452,14 @@ class TokenEndpoint(EndpointBase):
         if code.client.id != client.id:
             raise ErrorTokenEndpointRedirect(self.ERROR_INVALID_GRANT, 'Authorization code supplied was issued to another client.')
 
-        return self.generate_token(client, code.user, {'code': code})
+        token = self.generate_token(client, code.user, {'code': code})
+        token.save()
+
+        # Copying scopes from code.
+        for scope in code.scopes.all():
+            token.scopes.add(scope)
+
+        return token
 
     def handle_client_credentials(cls, client):
         """
