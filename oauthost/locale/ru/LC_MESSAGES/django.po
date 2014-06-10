@@ -1,0 +1,329 @@
+# django-oauthost translations template file
+# 
+# Copyright (C) 2011, Igor 'idle sign' Starikov
+# This file is distributed under the same license as the django-oauthost package.
+# 
+# Translators:
+# Igor Starikov <idlesign@yandex.ru>, 2014
+msgid ""
+msgstr ""
+"Project-Id-Version: django-oauthost\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2014-06-10 19:42+0700\n"
+"PO-Revision-Date: 2014-06-10 13:31+0000\n"
+"Last-Translator: Igor Starikov <idlesign@yandex.ru>\n"
+"Language-Team: Russian (http://www.transifex.com/projects/p/django-oauthost/language/ru/)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: ru\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+
+#: auth_handlers.py:104
+msgid "Access Restricted"
+msgstr "Доступ ограничен"
+
+#: endpoints.py:44
+msgid "Error"
+msgstr "Ошибка"
+
+#: endpoints.py:188
+msgid "OAuth 2.0 requires secure connection."
+msgstr "OAuth 2.0 требует шифрованного подключения"
+
+#: endpoints.py:642
+msgid "Client ID must be supplied."
+msgstr "ID клиента должен быть указан."
+
+#: endpoints.py:648
+msgid "Invalid client ID is supplied."
+msgstr "Указан неверный ID клиента."
+
+#: endpoints.py:671
+msgid "Redirect URI should be supplied for a given client."
+msgstr "Для этого клиента должен быть указан URI перенаправления."
+
+#: endpoints.py:681
+msgid "Redirection URI supplied is not associated with given client."
+msgstr "URI перенаправления не связан с указанным клиентом."
+
+#: endpoints.py:690
+msgid "Authorization Request"
+msgstr "Запрос авторизации"
+
+#: models.py:27
+msgid "Enabled"
+msgstr "Доступна"
+
+#: models.py:28
+msgid "Disabled"
+msgstr "Недоступна"
+
+#: models.py:31
+msgid "Scope ID"
+msgstr "ID области"
+
+#: models.py:31
+msgid "Scope identifier. Usually in form of `app_name:view_name`."
+msgstr "Идентификатор области. Обычно в виде `имя_приложения:имя_представления`."
+
+#: models.py:32
+msgid "Scope title"
+msgstr "Название области"
+
+#: models.py:32
+msgid "Scope human-friendly name."
+msgstr "Человекопонятное имя области."
+
+#: models.py:33
+msgid "Status"
+msgstr "Статус"
+
+#: models.py:36
+msgid "Scope"
+msgstr "Область"
+
+#: models.py:37 models.py:117 models.py:206 models.py:245
+msgid "Scopes"
+msgstr "Области"
+
+#: models.py:101
+msgid "Confidential"
+msgstr "Доверенный"
+
+#: models.py:102
+msgid "Public"
+msgstr "Публичный"
+
+#: models.py:105
+msgid "Registered at"
+msgstr "Дата регистрации"
+
+#: models.py:106
+msgid "Title"
+msgstr "Название"
+
+#: models.py:107
+msgid "Registrant"
+msgstr "Зарегистрировавший"
+
+#: models.py:107
+msgid "User who registered this client."
+msgstr "Пользователь, зарегистрировавший клиента."
+
+#: models.py:108
+msgid "Description"
+msgstr "Описание"
+
+#: models.py:109
+msgid "URL"
+msgstr "URL"
+
+#: models.py:109
+msgid "Application webpage URL."
+msgstr "URL страницы приложения."
+
+#: models.py:110
+msgid "Identifier"
+msgstr "Идентификтаор"
+
+#: models.py:110
+msgid "Public client identifier. <i>Generated automatically if empty.</i>."
+msgstr "Публичный идентификатор клиента. <i>Сгенерируется автоматически, если оставить поле пустым.</i>."
+
+#: models.py:111
+msgid "Token lifetime"
+msgstr "Время жизни токена"
+
+#: models.py:111
+msgid "Time in seconds after which token given to the application expires."
+msgstr "Время в секундах, после которого токен, выданный приложению будет просрочен."
+
+#: models.py:112
+msgid "Password"
+msgstr "Пароль"
+
+#: models.py:112
+msgid ""
+"Secret that can be used along with an identifier as username to authenticate"
+" with HTTP Basic scheme."
+msgstr "Секретная строка, которая, вкупе с идентификатором, может использоваться для авторизации методом HTTP Basic."
+
+#: models.py:113 models.py:241
+msgid "Type"
+msgstr "Тип"
+
+#: models.py:114
+msgid ""
+"<b>Confidential</b> &#8212; Clients capable of maintaining the "
+"confidentiality of their credentials, or capable of secure client "
+"authentication using other means.<br />                   <b>Public</b> "
+"&#8212; Clients incapable of maintaining the confidentiality of their "
+"credentials, and incapable of secure client authentication via any other "
+"means"
+msgstr "<b>Доверенные</b> &#8212; клиенты, способные хранить конфиденциальность данных авторизации, либо способные безопасно авторизовать клиента, используя другие средства.<br />                   <b>Публичные</b> &#8212; Клиенты, неспособные ни хранить конфиденциальность данных авторизации, ни безопасно авторизовать клиента, используя другие средства"
+
+#: models.py:117
+msgid ""
+"The scopes client is restricted to. <i>All registered scopes will be "
+"available for the client if none selected.</i>"
+msgstr "Области, которым ограничен клиент. <i>Если не выбраны, клиенту станут доступны все зарегистрированные области.</i>"
+
+#: models.py:118
+msgid "Supports # in \"Location\""
+msgstr "Поддерживает # в \"Location\""
+
+#: models.py:118
+msgid ""
+"Should be checked if this client supports fragment component (#) in the HTTP"
+" \"Location\" response header field"
+msgstr "Следует выбрать, если клиент поддерживает фрагмент (#) в HTTP заголовке \"Location\" ответов"
+
+#: models.py:121 models.py:163 models.py:204 models.py:243
+msgid "Client"
+msgstr "Клиент"
+
+#: models.py:122
+msgid "Clients"
+msgstr "Клиенты"
+
+#: models.py:187
+msgid "URI"
+msgstr "URI"
+
+#: models.py:187
+msgid ""
+"URI or URI scheme for authorization server to redirect client when an "
+"interaction with a resource owner is complete."
+msgstr "URI, либо схема URI, по которой сервер перенаправит клиента, после завершения процедуры авторизации."
+
+#: models.py:190
+msgid "Redirection Endpoint"
+msgstr "Перенаправление"
+
+#: models.py:191
+msgid "Redirection Endpoints"
+msgstr "Перенаправления"
+
+#: models.py:201 models.py:237
+msgid "Issued at"
+msgstr "Дата выдачи"
+
+#: models.py:202 models.py:244
+msgid "Code"
+msgstr "Код"
+
+#: models.py:202
+msgid "Code issued upon authorization."
+msgstr "Код, выданный при авторизации."
+
+#: models.py:203 models.py:242
+msgid "User"
+msgstr "Пользователь"
+
+#: models.py:203
+msgid "The user authorization is granted for."
+msgstr "Пользователь, которому выдан допуск."
+
+#: models.py:204
+msgid "The client authorization is granted for."
+msgstr "Клиент, которому выдан допуск."
+
+#: models.py:205
+msgid "Redirect URI"
+msgstr "URI перенаправления"
+
+#: models.py:205
+msgid "The URI authorization is bound to."
+msgstr "URI, к которому привязана авторизация."
+
+#: models.py:206
+msgid "The scopes token issued with this code should be restricted to."
+msgstr "Области, которыми дол быть оганичен токен, выдаваемый по данному коду."
+
+#: models.py:209
+msgid "Authorization code"
+msgstr "Код авторизации"
+
+#: models.py:210
+msgid "Authorization codes"
+msgstr "Коды авторизации"
+
+#: models.py:238
+msgid "Expires at"
+msgstr "Дата истечения"
+
+#: models.py:239
+msgid "Access Token"
+msgstr "Токен доступа"
+
+#: models.py:239
+msgid "Token to be used to access resources."
+msgstr "Токен для доступа к ресурсам."
+
+#: models.py:240
+msgid "Refresh Token"
+msgstr "Токен обновления"
+
+#: models.py:240
+msgid "Token to be used to refresh access token."
+msgstr "Токен для обновления токена доступа."
+
+#: models.py:241
+msgid ""
+"Access token type client uses to apply the appropriate authorization method."
+msgstr "Тип токена доступа, используемый клиентом для выбора нужного метода авторизации."
+
+#: models.py:242
+msgid "The user token is issued for."
+msgstr "Пользователь, которому выдан токен."
+
+#: models.py:243
+msgid "The client application token is issued for."
+msgstr "Клиент, которому выдан токен."
+
+#: models.py:244
+msgid "Authorization code used to generate this token."
+msgstr "Код авторизации, использованный для создания этого токена."
+
+#: models.py:245
+msgid "The scopes token is restricted to."
+msgstr "Области, для которых действует токен."
+
+#: models.py:248
+msgid "Token"
+msgstr "Токен"
+
+#: models.py:249
+msgid "Tokens"
+msgstr "Токены"
+
+#: templates/oauthost/authorize.html:6
+msgid "application asks you to grant it an access to:"
+msgstr "приложение просит вас дать досутп к:"
+
+#: templates/oauthost/authorize.html:12
+msgid "Yes, authorize it"
+msgstr "Да, подтверждаю"
+
+#: templates/oauthost/authorize.html:13
+msgid "No, I do not agree"
+msgstr "Нет, отказываю"
+
+#: templates/oauthost/authorize_proceed.html:4
+msgid "To return to the application please push the button below."
+msgstr "Для возврата в приложение нажмите на кнопку, расположенную ниже."
+
+#: templates/oauthost/authorize_proceed.html:5
+msgid "Return"
+msgstr "Вернуться"
+
+#: templates/oauthost/forbidden.html:3
+msgid "Sorry, but you have insufficient privileges to access this resource."
+msgstr "Извините, но ваших привилегий недостаточно для доступа к этому ресурсу."
+
+#: templates/oauthost/restricted.html:3
+msgid ""
+"Access to this resource is restricted. Please provide appropriate "
+"credentials within the request to proceed."
+msgstr "Доступ к этому ресурсу ограничен. Для работы с ним, пожалуйста, снабдите ваш запрос данными авторизации."
