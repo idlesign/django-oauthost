@@ -1,6 +1,12 @@
 django-oauthost changelog
 =========================
 
+v0.3.0
+------
++ Added Russian loco.
++ Added new param `redirect_uri` to `register_client()`.
+
+
 v0.2.0
 ------
 + API refactored.
