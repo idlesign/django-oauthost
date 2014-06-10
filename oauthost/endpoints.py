@@ -654,9 +654,8 @@ class AuthorizeEndpoint(EndpointBase):
         Returns a tuple: uri_from_request, uri_fixed_server
 
         """
-        # TODO Need handling revision.
         input_uri = self.input_params.get('redirect_uri')  # OPTIONAL
-        fixed_uri = input_uri
+        actual_uri = input_uri
 
         registered_uris = [url[0] for url in client.redirectionendpoint_set.values_list('uri')]
 
@@ -665,7 +664,7 @@ class AuthorizeEndpoint(EndpointBase):
             # redirect_uri is optional and was not supplied.
             if len(registered_uris) == 1:
                 # There is only one URI associated with client, so we use it.
-                fixed_uri = registered_uris[0]
+                actual_uri = registered_uris[0]
             else:
                 # Several URIs are registered with the client, decision is ambiguous.
                 LOGGER.error('Redirect URI was not supplied by client with ID "%s". Request from IP "%s".' % (client.id, get_remote_ip(self.request)))
@@ -677,11 +676,11 @@ class AuthorizeEndpoint(EndpointBase):
             The authorization server SHOULD NOT redirect the user-agent to unregistered or untrusted URIs
             to prevent the authorization endpoint from being used as an open redirector.
         '''
-        if fixed_uri not in registered_uris:
-            LOGGER.error('An attempt to use an untrusted URI "%s" for client with ID "%s". Request from IP "%s".' % (fixed_uri, client.id, get_remote_ip(self.request)))
+        if actual_uri not in registered_uris:
+            LOGGER.error('An attempt to use an untrusted URI "%s" for client with ID "%s". Request from IP "%s".' % (actual_uri, client.id, get_remote_ip(self.request)))
             raise ErrorOauthostPage(_('Redirection URI supplied is not associated with given client.'), self.request)
 
-        return input_uri, fixed_uri
+        return actual_uri
 
     def render_scopes_page(self, client, scopes):
         """Returns a response with oauthost page listing requested scopes."""
@@ -694,22 +693,22 @@ class AuthorizeEndpoint(EndpointBase):
 
     def request_auth_confirmation(self):
         client = self.get_client()
-        input_uri, fixed_uri = self.get_redirect_url(client)
+        redirect_uri = self.get_redirect_url(client)
 
         state = self.input_params.get('state')  # RECOMMENDED
 
         response_type = self.input_params.get('response_type')  # REQUIRED
         if response_type not in self._allowed_response_types:
-            raise ErrorAuthorizeEndpointRedirect(self.ERROR_UNSUPPORTED_RESPONSE_TYPE, 'Unsupported response type requested', input_uri, state)
+            raise ErrorAuthorizeEndpointRedirect(self.ERROR_UNSUPPORTED_RESPONSE_TYPE, 'Unsupported response type requested', redirect_uri, state)
 
         try:
             filtered_scopes = self.filter_scopes(client)
         except ScopeException as e:
-            raise ErrorAuthorizeEndpointRedirect(self.ERROR_INVALID_SCOPE, e.message, fixed_uri, state)
+            raise ErrorAuthorizeEndpointRedirect(self.ERROR_INVALID_SCOPE, e.message, redirect_uri, state)
 
         self.request.session['oauth_client_id'] = client.id
         self.request.session['oauth_response_type'] = response_type
-        self.request.session['oauth_redirect_uri'] = fixed_uri
+        self.request.session['oauth_redirect_uri'] = redirect_uri
         self.request.session['oauth_scopes_ids'] = [s.id for s in filtered_scopes]
         self.request.session['oauth_state'] = state
 
@@ -800,11 +799,22 @@ class AuthorizeEndpoint(EndpointBase):
         return self.build_token_document(token, client.token_lifetime, with_refresh_token=False)
 
     def process_request(self):
-        """Main method performing client request processing."""
+        """Main method performing client request processing.
 
-        # TODO Need user interaction revision.
+        SPEC:
+            The authorization server validates the request to ensure that all
+            required parameters are present and valid.  If the request is valid,
+            the authorization server authenticates the resource owner and obtains
+            an authorization decision (by asking the resource owner or by
+            establishing approval via other means).
 
+            When a decision is established, the authorization server directs the
+            user-agent to the provided client redirection URI using an HTTP
+            redirection response, or by other means available to it via the
+            user-agent.
+        """
         if self.request.POST.get('auth_decision') is None:
+            # Obtain an authorization decision by asking the resource owner.
             return self.request_auth_confirmation()
 
         # User has made his choice using auth form.
