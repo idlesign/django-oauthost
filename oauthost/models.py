@@ -160,7 +160,7 @@ class RedirectionEndpoint(models.Model):
        redirection endpoints.
     """
 
-    client = models.ForeignKey(Client, verbose_name=_('Client'))
+    client = models.ForeignKey(Client, verbose_name=_('Client'), related_name='redirection_uris')
 
     '''
     SPEC:

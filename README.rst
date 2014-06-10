@@ -26,7 +26,7 @@ It allows to guard your application views with OAuth 2.0 in quite a trivial way.
     my_scopes = ['polls:vote']
 
     # `user` might be `request.user` if in a view.
-    register_client('My OAuth Client', 'my_client', user, scopes_list=my_scopes)
+    register_client('My OAuth Client', 'my_client', 'http://someurl.com/myclient/', user, scopes_list=my_scopes)
 
     ...
 

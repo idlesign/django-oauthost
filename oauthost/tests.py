@@ -46,14 +46,17 @@ class ToolboxCheck(TestCase):
         scope1 = Scope(identifier='scope1')
         scope1.save()
 
-        cl = register_client('client1_title', 'client1', user)
+        cl = register_client('client1_title', 'client1', 'http://client1url.com/client1/', user)
         self.assertEqual(cl.identifier, 'client1')
         self.assertEqual(cl.title, 'client1_title')
         self.assertEqual(cl.user, user)
+        uris = cl.redirection_uris.all()
+        self.assertEqual(len(uris), 1)
+        self.assertEqual(uris[0].uri, 'http://client1url.com/client1/')
 
-        self.assertRaises(OauthostException, register_client, 'client2_title', 'client2', user, scopes_list=[scope1, 'scope2'], register_unknown_scopes=False)
+        self.assertRaises(OauthostException, register_client, 'client2_title', 'client2', 'http://client2url.com/client2/', user, scopes_list=[scope1, 'scope2'], register_unknown_scopes=False)
 
-        cl = register_client('client2_title', 'client2', user, scopes_list=[scope1, 'scope2'], token_lifetime=300, public=False, client_params={'description': 'client2_decr'})
+        cl = register_client('client2_title', 'client2', 'http://client2url.com/client2/', user, scopes_list=[scope1, 'scope2'], token_lifetime=300, public=False, client_params={'description': 'client2_decr'})
         self.assertEqual(cl.identifier, 'client2')
         self.assertEqual(cl.title, 'client2_title')
         self.assertEqual(cl.token_lifetime, 300)
@@ -61,6 +64,9 @@ class ToolboxCheck(TestCase):
         self.assertEqual(cl.description, 'client2_decr')
         self.assertNotEqual(cl.type, Client.TYPE_PUBLIC)
         self.assertEqual(len(cl.scopes.all()), 2)
+        uris = cl.redirection_uris.all()
+        self.assertEqual(len(uris), 1)
+        self.assertEqual(uris[0].uri, 'http://client2url.com/client2/')
 
 
 class EndpointTokenCheck(TestCase):

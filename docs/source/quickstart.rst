@@ -95,7 +95,7 @@ Step by step
         my_scopes = ['polls:vote', 'polls:stats']
 
         # `user` might be `request.user` if in a view.
-        register_client('My OAuth Client', 'my_client', user, scopes_list=my_scopes)
+        register_client('My OAuth Client', '1234', 'http://myapp.com/', user, scopes_list=my_scopes)
 
         ...
 

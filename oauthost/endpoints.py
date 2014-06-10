@@ -657,7 +657,7 @@ class AuthorizeEndpoint(EndpointBase):
         input_uri = self.input_params.get('redirect_uri')  # OPTIONAL
         actual_uri = input_uri
 
-        registered_uris = [url[0] for url in client.redirectionendpoint_set.values_list('uri')]
+        registered_uris = [url[0] for url in client.redirection_uris.values_list('uri')]
 
         # Check redirection URI validity.
         if input_uri is None:

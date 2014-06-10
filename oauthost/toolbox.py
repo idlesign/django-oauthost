@@ -1,13 +1,14 @@
 from .settings import REGISTRY_TOKEN_TYPE
-from .models import Client, Scope
+from .models import Client, Scope, RedirectionEndpoint
 from .exceptions import OauthostException
 
 
-def register_client(title, identifier, registrant, scopes_list=None, register_unknown_scopes=True, token_lifetime=3600, public=True, client_params=None):
+def register_client(title, identifier, redirect_uri, registrant, scopes_list=None, register_unknown_scopes=True, token_lifetime=3600, public=True, client_params=None):
     """Registers a client.
 
     :param title: client title.
     :param identifier: client identifier
+    :param redirect_uri: redirect URI to associate with this client
     :param registrant: user who registeres this client
     :param scopes_list: a list of scope identifiers or Scope objects to restrict the client to.
     :param register_unknown_scopes: this allows to raise OauthostException if scopes_list contans an unregistered item instead of registering it.
@@ -61,6 +62,9 @@ def register_client(title, identifier, registrant, scopes_list=None, register_un
 
     for scope_obj in target_scope_objects:
         cl.scopes.add(scope_obj)
+
+    if redirect_uri is not None:
+        RedirectionEndpoint(uri=redirect_uri, client=cl).save()
 
     return cl
 
