@@ -9,9 +9,9 @@ f.close()
 setup(
     name='django-oauthost',
     version='.'.join(map(str, VERSION)),
-    description='This reusable Django application introduces OAuth2 server functionality.',
+    description='Reusable application for Django to protect your apps with OAuth 2.0.',
     long_description=readme,
-    author="Igor 'idle sign' Starikov",
+    author='Igor `idle sign` Starikov',
     author_email='idlesign@yandex.ru',
     url='http://github.com/idlesign/django-oauthost',
     packages=['oauthost'],
@@ -29,5 +29,5 @@ setup(
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.3',
-        ],
+    ]
 )

@@ -12,7 +12,7 @@ http://github.com/idlesign/django-oauthost
 What's that
 -----------
 
-*django-oauthost is a reusable application for Django, introducing OAuth2 server.*
+*Reusable application for Django to protect your apps with OAuth 2.0.*
 
 It allows to guard your application views with OAuth 2.0 in quite a trivial way.
 

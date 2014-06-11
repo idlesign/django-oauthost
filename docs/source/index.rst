@@ -1,7 +1,7 @@
 django-oauthost documentation
 =============================
 
-*django-oauthost is a reusable application for Django, introducing OAuth2 server functionality.*
+*Reusable application for Django to protect your apps with OAuth 2.0.*
 
 It allows to guard your applications views with OAuth 2.0 in quite a trivial way.
 
