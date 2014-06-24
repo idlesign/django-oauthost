@@ -47,5 +47,5 @@ for the others — publish it.
 Also
 ----
 
-If the application is not what you want for site navigation, you might be interested in considering
+If the application is not what you want for OAuth 2.0, you might be interested in considering
 other choices at http://djangopackages.com/grids/g/oauth-servers/
