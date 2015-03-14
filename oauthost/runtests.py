@@ -15,7 +15,11 @@ def main():
             INSTALLED_APPS=('django.contrib.auth', 'django.contrib.contenttypes', 'django.contrib.sessions', app_name),
             DATABASES={'default': {'ENGINE': 'django.db.backends.sqlite3'}},
             ROOT_URLCONF='oauthost.urls',
-            MIDDLEWARE_CLASSES=global_settings.MIDDLEWARE_CLASSES,  # Prevents Django 1.7 warning.
+            MIDDLEWARE_CLASSES=(
+                'django.middleware.common.CommonMiddleware',
+                'django.contrib.sessions.middleware.SessionMiddleware',
+                'django.contrib.auth.middleware.AuthenticationMiddleware',
+            ),
         )
 
     try:  # Django 1.7 +

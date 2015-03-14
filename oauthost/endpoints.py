@@ -375,7 +375,6 @@ class TokenEndpoint(EndpointBase):
             #    The parameters can only
             #    be transmitted in the request-body and MUST NOT be included in the
             #    request URI.
-
             client_id = self.input_params.get('client_id')
             client_password = self.input_params.get('client_secret')
 
@@ -395,7 +394,6 @@ class TokenEndpoint(EndpointBase):
             #    different "client_id".  This protects the client from substitution of
             #    the authentication code.  (It provides no additional security for the
             #    protected resource.)
-
             if client is not None:
                 if client.password.strip() != '' and client.password != client_password:
                     client = None
@@ -449,7 +447,6 @@ class TokenEndpoint(EndpointBase):
         #     revoke (when possible) all tokens previously issued based on
         #     that authorization code.  The authorization code is bound to
         #     the client identifier and redirection URI.
-
         previous_tokens = Token.objects.filter(code=code).all()
         if len(previous_tokens) > 0:
             previous_tokens.delete()
@@ -700,12 +697,10 @@ class AuthorizeEndpoint(EndpointBase):
                 )
                 raise ErrorOauthostPage(_('Redirect URI should be supplied for a given client.'), self.request)
 
-        """
-        SPEC:
-
-            The authorization server SHOULD NOT redirect the user-agent to unregistered or untrusted URIs
-            to prevent the authorization endpoint from being used as an open redirector.
-        """
+        # SPEC:
+        #
+        #     The authorization server SHOULD NOT redirect the user-agent to unregistered or untrusted URIs
+        #     to prevent the authorization endpoint from being used as an open redirector.
         if actual_uri not in registered_uris:
             LOGGER.error(
                 'An attempt to use an untrusted URI "%s" for client with ID "%s". Request from IP "%s".',
@@ -778,16 +773,14 @@ class AuthorizeEndpoint(EndpointBase):
         if state is not None:
             output_params['state'] = state
 
-        """
-        SPEC:
-
-           Developers should note that some user-agents do not support the
-           inclusion of a fragment component in the HTTP "Location" response
-           header field.  Such clients will require using other methods for
-           redirecting the client than a 3xx redirection response -- for
-           example, returning an HTML page that includes a 'continue' button
-           with an action linked to the redirection URI.
-        """
+        # SPEC:
+        #
+        #    Developers should note that some user-agents do not support the
+        #    inclusion of a fragment component in the HTTP "Location" response
+        #    header field.  Such clients will require using other methods for
+        #    redirecting the client than a 3xx redirection response -- for
+        #    example, returning an HTML page that includes a 'continue' button
+        #    with an action linked to the redirection URI.
         if not client.hash_sign_supported:
             data_dict = {'action_uri': self.build_redirect_url(redirect_uri, output_params, params_as_uri_fragment)}
             return render(self.request, TEMPLATE_AUTHORIZE_PROCEED, data_dict)
