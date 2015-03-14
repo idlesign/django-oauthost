@@ -8,6 +8,15 @@ http://github.com/idlesign/django-oauthost
 .. image:: https://pypip.in/d/django-oauthost/badge.png
         :target: https://crate.io/packages/django-oauthost
 
+.. image:: https://coveralls.io/repos/idlesign/django-oauthost/badge.png
+    :target: https://coveralls.io/r/idlesign/django-oauthost
+
+.. image:: https://travis-ci.org/idlesign/django-oauthost.svg?branch=master
+    :target: https://travis-ci.org/idlesign/django-oauthost
+
+.. image:: https://landscape.io/github/idlesign/django-oauthost/master/landscape.svg?style=plastic
+   :target: https://landscape.io/github/idlesign/django-oauthost/master
+
 
 What's that
 -----------
