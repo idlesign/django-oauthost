@@ -2,9 +2,6 @@ strictness: medium
 uses:
     - django
 autodetect: yes
-requirements:
-    - deps/core.txt
-    - deps/test.txt
 ignore-paths:
     - docs
     - oauthost/migrations
