@@ -7,7 +7,7 @@ from django.http import HttpResponse
 from django.utils.translation import ugettext_lazy as _
 
 
-class BearerAuthHandler():
+class BearerAuthHandler(object):
     """Handles Bearer token authentication calls.
 
     SPEC: http://tools.ietf.org/html/rfc6750

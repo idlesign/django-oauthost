@@ -58,7 +58,10 @@ class ErrorTokenEndpointRedirect(EndpointError):
 
     def as_response(self):
         """For token endpoint. Issues JSON error response."""
-        return TokenEndpoint.build_response({'error': self.error_type, 'error_description': self.message}, self.http_status, self.additional_headers)
+        return TokenEndpoint.build_response(
+            {'error': self.error_type, 'error_description': self.message},
+            self.http_status, self.additional_headers
+        )
 
 
 class ErrorAuthorizeEndpointRedirect(EndpointError):
@@ -76,7 +79,9 @@ class ErrorAuthorizeEndpointRedirect(EndpointError):
         doc = {'error': self.error_type, 'error_description': self.message}
         if self.state is not None:
             doc.update({'state': self.state})
-        return HttpResponseRedirect(AuthorizeEndpoint.build_redirect_url(self.redirect_uri, doc, self.uri_fragment_supported))
+        return HttpResponseRedirect(
+            AuthorizeEndpoint.build_redirect_url(self.redirect_uri, doc, self.uri_fragment_supported)
+        )
 
 
 class EndpointBase(object):
@@ -324,7 +329,10 @@ class TokenEndpoint(EndpointBase):
     @classmethod
     def build_response(cls, data_dict, http_status=200, additional_headers=None):
         """For token endpoint. Issues JSON response."""
-        response = HttpResponse(content_type='application/json;charset=UTF-8', content=json.dumps(data_dict), status=http_status)
+        response = HttpResponse(
+            content_type='application/json;charset=UTF-8',
+            content=json.dumps(data_dict), status=http_status
+        )
         response['Cache-Control'] = 'no-store'
         response['Pragma'] = 'no-cache'
         if additional_headers is None:
@@ -348,10 +356,10 @@ class TokenEndpoint(EndpointBase):
             if auth_method_type == 'Basic':
                 try:
                     client_id, client_password = b64decode(auth_method_value).decode('utf-8').split(':')
-                except Exception:
+                except (TypeError, UnicodeDecodeError, AttributeError):
                     pass
         else:
-            '''
+            """
             SPEC:
                Alternatively, the authorization server MAY support including the
                client credentials in the request-body using the following
@@ -367,7 +375,7 @@ class TokenEndpoint(EndpointBase):
                The parameters can only
                be transmitted in the request-body and MUST NOT be included in the
                request URI.
-            '''
+            """
             client_id = self.input_params.get('client_id')
             client_password = self.input_params.get('client_secret')
 
@@ -377,7 +385,7 @@ class TokenEndpoint(EndpointBase):
             except ObjectDoesNotExist:
                 client = None
 
-            '''
+            """
             SPEC:
 
                A client MAY use the "client_id" request parameter to identify itself
@@ -389,13 +397,17 @@ class TokenEndpoint(EndpointBase):
                the authentication code.  (It provides no additional security for the
                protected resource.)
 
-            '''
+            """
             if client is not None:
                 if client.password.strip() != '' and client.password != client_password:
                     client = None
 
         if client is None:
-            raise ErrorTokenEndpointRedirect(self.ERROR_INVALID_CLIENT, 'Unable to authenticate client by its credentials.', http_status=401, additional_headers=auth_error_headers)
+            raise ErrorTokenEndpointRedirect(
+                self.ERROR_INVALID_CLIENT,
+                'Unable to authenticate client by its credentials.',
+                http_status=401, additional_headers=auth_error_headers
+            )
 
         return client
 
@@ -423,14 +435,16 @@ class TokenEndpoint(EndpointBase):
         redirect_uri = self.input_params.get('redirect_uri')  # REQUIRED
 
         if code is None or redirect_uri is None:
-            raise ErrorTokenEndpointRedirect(self.ERROR_INVALID_REQUEST, 'Required param(s) are missing. Expected: `code` and `redirect_uri`.')
+            raise ErrorTokenEndpointRedirect(
+                self.ERROR_INVALID_REQUEST, 'Required param(s) are missing. Expected: `code` and `redirect_uri`.'
+            )
 
         try:
             code = AuthorizationCode.objects.get(code=code)
         except ObjectDoesNotExist:
             raise ErrorTokenEndpointRedirect(self.ERROR_INVALID_GRANT, 'Invalid authorization code is supplied.')
 
-        '''
+        """
         SPEC:
 
             If an authorization code is used more than
@@ -439,18 +453,24 @@ class TokenEndpoint(EndpointBase):
             that authorization code.  The authorization code is bound to
             the client identifier and redirection URI.
 
-        '''
+        """
         previous_tokens = Token.objects.filter(code=code).all()
         if len(previous_tokens) > 0:
             previous_tokens.delete()
             code.delete()
-            raise ErrorTokenEndpointRedirect(self.ERROR_INVALID_GRANT, 'Authorization code is used more than once. Code and tokens are revoked.')
+            raise ErrorTokenEndpointRedirect(
+                self.ERROR_INVALID_GRANT, 'Authorization code is used more than once. Code and tokens are revoked.'
+            )
 
         if code.uri != redirect_uri:
-            raise ErrorTokenEndpointRedirect(self.ERROR_INVALID_GRANT, 'Supplied URI does not match the URI associated with authorization code.')
+            raise ErrorTokenEndpointRedirect(
+                self.ERROR_INVALID_GRANT, 'Supplied URI does not match the URI associated with authorization code.'
+            )
 
         if code.client.id != client.id:
-            raise ErrorTokenEndpointRedirect(self.ERROR_INVALID_GRANT, 'Authorization code supplied was issued to another client.')
+            raise ErrorTokenEndpointRedirect(
+                self.ERROR_INVALID_GRANT, 'Authorization code supplied was issued to another client.'
+            )
 
         token = self.generate_token(client, code.user, {'code': code})
         token.save()
@@ -461,7 +481,7 @@ class TokenEndpoint(EndpointBase):
 
         return token
 
-    def handle_client_credentials(cls, client):
+    def handle_client_credentials(self, client):
         """
         SPEC:
 
@@ -480,10 +500,12 @@ class TokenEndpoint(EndpointBase):
         """
 
         if not client.is_confidential():
-            raise ErrorTokenEndpointRedirect('client_credentials', 'This client type is not authorized to use this grant type.')
+            raise ErrorTokenEndpointRedirect(
+                'client_credentials', 'This client type is not authorized to use this grant type.'
+            )
 
         # Let's suppose that the user is the one, who has registered the client.
-        return cls.generate_token(client, client.user)
+        return self.generate_token(client, client.user)
 
     def handle_password(self, client):
         """
@@ -513,7 +535,9 @@ class TokenEndpoint(EndpointBase):
         password = self.input_params.get('password')  # REQUIRED
 
         if username is None or password is None:
-            raise ErrorTokenEndpointRedirect(self.ERROR_INVALID_REQUEST, 'Required param(s) are missing. Expected: `username` and `password`.')
+            raise ErrorTokenEndpointRedirect(
+                self.ERROR_INVALID_REQUEST, 'Required param(s) are missing. Expected: `username` and `password`.'
+            )
 
         try:
             user = User.objects.get(username=username)
@@ -537,7 +561,9 @@ class TokenEndpoint(EndpointBase):
             raise ErrorTokenEndpointRedirect(self.ERROR_INVALID_GRANT, 'Refresh token supplied is invalid.')
         else:
             if token.client_id != client.id:
-                raise ErrorTokenEndpointRedirect(self.ERROR_INVALID_GRANT, 'Refresh token supplied was issued to another client.')
+                raise ErrorTokenEndpointRedirect(
+                    self.ERROR_INVALID_GRANT, 'Refresh token supplied was issued to another client.'
+                )
 
         # For refresh token grant we only swap token values.
         token.date_issued = datetime.now()
@@ -553,7 +579,10 @@ class TokenEndpoint(EndpointBase):
 
         client = self.get_client()
         token = self.get_token_for_grant_type(grant_type, client)
-        token_doc = self.build_token_document(token, client.token_lifetime, with_refresh_token=(grant_type != 'client_credentials'))
+        token_doc = self.build_token_document(
+            token, client.token_lifetime,
+            with_refresh_token=(grant_type != 'client_credentials')
+        )
 
         return self.build_response(token_doc)
 
@@ -644,7 +673,9 @@ class AuthorizeEndpoint(EndpointBase):
         try:
             client = Client.objects.get(identifier=client_id)
         except ObjectDoesNotExist:
-            LOGGER.error('Invalid client ID supplied. Value "%s" was sent from IP "%s".' % (client_id, get_remote_ip(self.request)))
+            LOGGER.error(
+                'Invalid client ID supplied. Value "%s" was sent from IP "%s".', client_id, get_remote_ip(self.request)
+            )
             raise ErrorOauthostPage(_('Invalid client ID is supplied.'), self.request)
 
         return client
@@ -667,17 +698,23 @@ class AuthorizeEndpoint(EndpointBase):
                 actual_uri = registered_uris[0]
             else:
                 # Several URIs are registered with the client, decision is ambiguous.
-                LOGGER.error('Redirect URI was not supplied by client with ID "%s". Request from IP "%s".' % (client.id, get_remote_ip(self.request)))
+                LOGGER.error(
+                    'Redirect URI was not supplied by client with ID "%s". Request from IP "%s".',
+                    client.id, get_remote_ip(self.request)
+                )
                 raise ErrorOauthostPage(_('Redirect URI should be supplied for a given client.'), self.request)
 
-        '''
+        """
         SPEC:
 
             The authorization server SHOULD NOT redirect the user-agent to unregistered or untrusted URIs
             to prevent the authorization endpoint from being used as an open redirector.
-        '''
+        """
         if actual_uri not in registered_uris:
-            LOGGER.error('An attempt to use an untrusted URI "%s" for client with ID "%s". Request from IP "%s".' % (actual_uri, client.id, get_remote_ip(self.request)))
+            LOGGER.error(
+                'An attempt to use an untrusted URI "%s" for client with ID "%s". Request from IP "%s".',
+                actual_uri, client.id, get_remote_ip(self.request)
+            )
             raise ErrorOauthostPage(_('Redirection URI supplied is not associated with given client.'), self.request)
 
         return actual_uri
@@ -699,7 +736,9 @@ class AuthorizeEndpoint(EndpointBase):
 
         response_type = self.input_params.get('response_type')  # REQUIRED
         if response_type not in self._allowed_response_types:
-            raise ErrorAuthorizeEndpointRedirect(self.ERROR_UNSUPPORTED_RESPONSE_TYPE, 'Unsupported response type requested', redirect_uri, state)
+            raise ErrorAuthorizeEndpointRedirect(
+                self.ERROR_UNSUPPORTED_RESPONSE_TYPE, 'Unsupported response type requested', redirect_uri, state
+            )
 
         try:
             filtered_scopes = self.filter_scopes(client)
@@ -743,7 +782,7 @@ class AuthorizeEndpoint(EndpointBase):
         if state is not None:
             output_params['state'] = state
 
-        '''
+        """
         SPEC:
 
            Developers should note that some user-agents do not support the
@@ -752,7 +791,7 @@ class AuthorizeEndpoint(EndpointBase):
            redirecting the client than a 3xx redirection response -- for
            example, returning an HTML page that includes a 'continue' button
            with an action linked to the redirection URI.
-        '''
+        """
         if not client.hash_sign_supported:
             data_dict = {'action_uri': self.build_redirect_url(redirect_uri, output_params, params_as_uri_fragment)}
             return render(self.request, TEMPLATE_AUTHORIZE_PROCEED, data_dict)
@@ -829,7 +868,11 @@ class AuthorizeEndpoint(EndpointBase):
         if self.request.POST.get('confirmed') is None:
             # User has declined authorization.
             self._clear_session()
-            raise ErrorAuthorizeEndpointRedirect(self.ERROR_ACCESS_DENIED, 'Authorization is canceled by user', redirect_uri, state, params_as_uri_fragment)
+            raise ErrorAuthorizeEndpointRedirect(
+                self.ERROR_ACCESS_DENIED,
+                'Authorization is canceled by user',
+                redirect_uri, state, params_as_uri_fragment
+            )
 
         # Simulate scope for filter_scopes()
         self.input_params['scope'] = Scope.objects.filter(id__in=scopes_ids).all()
