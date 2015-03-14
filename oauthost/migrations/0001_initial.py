@@ -1,209 +1,128 @@
-# encoding: utf-8
-import datetime
-from south.db import db
-from south.v2 import SchemaMigration
-from django.db import models
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
 
-class Migration(SchemaMigration):
-
-    def forwards(self, orm):
-        
-        # Adding model 'Scope'
-        db.create_table('oauthost_scope', (
-            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('identifier', self.gf('django.db.models.fields.CharField')(unique=True, max_length=100)),
-            ('title', self.gf('django.db.models.fields.CharField')(max_length=250)),
-        ))
-        db.send_create_signal('oauthost', ['Scope'])
-
-        # Adding model 'Client'
-        db.create_table('oauthost_client', (
-            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('date_registered', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
-            ('title', self.gf('django.db.models.fields.CharField')(unique=True, max_length=100)),
-            ('user', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['auth.User'])),
-            ('description', self.gf('django.db.models.fields.TextField')(max_length=100)),
-            ('link', self.gf('django.db.models.fields.URLField')(max_length=200, null=True, blank=True)),
-            ('identifier', self.gf('django.db.models.fields.CharField')(unique=True, max_length=250, blank=True)),
-            ('token_lifetime', self.gf('django.db.models.fields.IntegerField')(null=True, blank=True)),
-            ('password', self.gf('django.db.models.fields.CharField')(max_length=250, blank=True)),
-            ('type', self.gf('django.db.models.fields.IntegerField')(default=1)),
-            ('hash_sign_supported', self.gf('django.db.models.fields.BooleanField')(default=True)),
-        ))
-        db.send_create_signal('oauthost', ['Client'])
-
-        # Adding M2M table for field scopes on 'Client'
-        db.create_table('oauthost_client_scopes', (
-            ('id', models.AutoField(verbose_name='ID', primary_key=True, auto_created=True)),
-            ('client', models.ForeignKey(orm['oauthost.client'], null=False)),
-            ('scope', models.ForeignKey(orm['oauthost.scope'], null=False))
-        ))
-        db.create_unique('oauthost_client_scopes', ['client_id', 'scope_id'])
-
-        # Adding model 'RedirectionEndpoint'
-        db.create_table('oauthost_redirectionendpoint', (
-            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('client', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['oauthost.Client'])),
-            ('uri', self.gf('django.db.models.fields.URLField')(max_length=200)),
-        ))
-        db.send_create_signal('oauthost', ['RedirectionEndpoint'])
-
-        # Adding model 'AuthorizationCode'
-        db.create_table('oauthost_authorizationcode', (
-            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('date_issued', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
-            ('code', self.gf('django.db.models.fields.CharField')(unique=True, max_length=7)),
-            ('user', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['auth.User'])),
-            ('client', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['oauthost.Client'])),
-            ('uri', self.gf('django.db.models.fields.URLField')(max_length=200)),
-        ))
-        db.send_create_signal('oauthost', ['AuthorizationCode'])
-
-        # Adding M2M table for field scopes on 'AuthorizationCode'
-        db.create_table('oauthost_authorizationcode_scopes', (
-            ('id', models.AutoField(verbose_name='ID', primary_key=True, auto_created=True)),
-            ('authorizationcode', models.ForeignKey(orm['oauthost.authorizationcode'], null=False)),
-            ('scope', models.ForeignKey(orm['oauthost.scope'], null=False))
-        ))
-        db.create_unique('oauthost_authorizationcode_scopes', ['authorizationcode_id', 'scope_id'])
-
-        # Adding model 'Token'
-        db.create_table('oauthost_token', (
-            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('date_issued', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
-            ('expires_at', self.gf('django.db.models.fields.DateTimeField')(null=True, blank=True)),
-            ('access_token', self.gf('django.db.models.fields.CharField')(unique=True, max_length=32)),
-            ('refresh_token', self.gf('django.db.models.fields.CharField')(max_length=32, unique=True, null=True, blank=True)),
-            ('access_token_type', self.gf('django.db.models.fields.CharField')(default='bearer', max_length=100)),
-            ('user', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['auth.User'], null=True, blank=True)),
-            ('client', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['oauthost.Client'])),
-            ('code', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['oauthost.AuthorizationCode'], null=True, blank=True)),
-        ))
-        db.send_create_signal('oauthost', ['Token'])
-
-        # Adding M2M table for field scopes on 'Token'
-        db.create_table('oauthost_token_scopes', (
-            ('id', models.AutoField(verbose_name='ID', primary_key=True, auto_created=True)),
-            ('token', models.ForeignKey(orm['oauthost.token'], null=False)),
-            ('scope', models.ForeignKey(orm['oauthost.scope'], null=False))
-        ))
-        db.create_unique('oauthost_token_scopes', ['token_id', 'scope_id'])
+from django.db import models, migrations
+from django.conf import settings
+import oauthost.fields
 
 
-    def backwards(self, orm):
-        
-        # Deleting model 'Scope'
-        db.delete_table('oauthost_scope')
+class Migration(migrations.Migration):
 
-        # Deleting model 'Client'
-        db.delete_table('oauthost_client')
+    dependencies = [
+        migrations.swappable_dependency(settings.AUTH_USER_MODEL),
+    ]
 
-        # Removing M2M table for field scopes on 'Client'
-        db.delete_table('oauthost_client_scopes')
-
-        # Deleting model 'RedirectionEndpoint'
-        db.delete_table('oauthost_redirectionendpoint')
-
-        # Deleting model 'AuthorizationCode'
-        db.delete_table('oauthost_authorizationcode')
-
-        # Removing M2M table for field scopes on 'AuthorizationCode'
-        db.delete_table('oauthost_authorizationcode_scopes')
-
-        # Deleting model 'Token'
-        db.delete_table('oauthost_token')
-
-        # Removing M2M table for field scopes on 'Token'
-        db.delete_table('oauthost_token_scopes')
-
-
-    models = {
-        'auth.group': {
-            'Meta': {'object_name': 'Group'},
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '80'}),
-            'permissions': ('django.db.models.fields.related.ManyToManyField', [], {'to': "orm['auth.Permission']", 'symmetrical': 'False', 'blank': 'True'})
-        },
-        'auth.permission': {
-            'Meta': {'ordering': "('content_type__app_label', 'content_type__model', 'codename')", 'unique_together': "(('content_type', 'codename'),)", 'object_name': 'Permission'},
-            'codename': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
-            'content_type': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['contenttypes.ContentType']"}),
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'name': ('django.db.models.fields.CharField', [], {'max_length': '50'})
-        },
-        'auth.user': {
-            'Meta': {'object_name': 'User'},
-            'date_joined': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime.now'}),
-            'email': ('django.db.models.fields.EmailField', [], {'max_length': '75', 'blank': 'True'}),
-            'first_name': ('django.db.models.fields.CharField', [], {'max_length': '30', 'blank': 'True'}),
-            'groups': ('django.db.models.fields.related.ManyToManyField', [], {'to': "orm['auth.Group']", 'symmetrical': 'False', 'blank': 'True'}),
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'is_active': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
-            'is_staff': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'is_superuser': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'last_login': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime.now'}),
-            'last_name': ('django.db.models.fields.CharField', [], {'max_length': '30', 'blank': 'True'}),
-            'password': ('django.db.models.fields.CharField', [], {'max_length': '128'}),
-            'user_permissions': ('django.db.models.fields.related.ManyToManyField', [], {'to': "orm['auth.Permission']", 'symmetrical': 'False', 'blank': 'True'}),
-            'username': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '30'})
-        },
-        'contenttypes.contenttype': {
-            'Meta': {'ordering': "('name',)", 'unique_together': "(('app_label', 'model'),)", 'object_name': 'ContentType', 'db_table': "'django_content_type'"},
-            'app_label': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'model': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
-            'name': ('django.db.models.fields.CharField', [], {'max_length': '100'})
-        },
-        'oauthost.authorizationcode': {
-            'Meta': {'object_name': 'AuthorizationCode'},
-            'client': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['oauthost.Client']"}),
-            'code': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '7'}),
-            'date_issued': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'scopes': ('django.db.models.fields.related.ManyToManyField', [], {'symmetrical': 'False', 'to': "orm['oauthost.Scope']", 'null': 'True', 'blank': 'True'}),
-            'uri': ('django.db.models.fields.URLField', [], {'max_length': '200'}),
-            'user': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['auth.User']"})
-        },
-        'oauthost.client': {
-            'Meta': {'object_name': 'Client'},
-            'date_registered': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
-            'description': ('django.db.models.fields.TextField', [], {'max_length': '100'}),
-            'hash_sign_supported': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'identifier': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '250', 'blank': 'True'}),
-            'link': ('django.db.models.fields.URLField', [], {'max_length': '200', 'null': 'True', 'blank': 'True'}),
-            'password': ('django.db.models.fields.CharField', [], {'max_length': '250', 'blank': 'True'}),
-            'scopes': ('django.db.models.fields.related.ManyToManyField', [], {'symmetrical': 'False', 'to': "orm['oauthost.Scope']", 'null': 'True', 'blank': 'True'}),
-            'title': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '100'}),
-            'token_lifetime': ('django.db.models.fields.IntegerField', [], {'null': 'True', 'blank': 'True'}),
-            'type': ('django.db.models.fields.IntegerField', [], {'default': '1'}),
-            'user': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['auth.User']"})
-        },
-        'oauthost.redirectionendpoint': {
-            'Meta': {'object_name': 'RedirectionEndpoint'},
-            'client': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['oauthost.Client']"}),
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'uri': ('django.db.models.fields.URLField', [], {'max_length': '200'})
-        },
-        'oauthost.scope': {
-            'Meta': {'ordering': "['title']", 'object_name': 'Scope'},
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'identifier': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '100'}),
-            'title': ('django.db.models.fields.CharField', [], {'max_length': '250'})
-        },
-        'oauthost.token': {
-            'Meta': {'object_name': 'Token'},
-            'access_token': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '32'}),
-            'access_token_type': ('django.db.models.fields.CharField', [], {'default': "'bearer'", 'max_length': '100'}),
-            'client': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['oauthost.Client']"}),
-            'code': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['oauthost.AuthorizationCode']", 'null': 'True', 'blank': 'True'}),
-            'date_issued': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
-            'expires_at': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'blank': 'True'}),
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'refresh_token': ('django.db.models.fields.CharField', [], {'max_length': '32', 'unique': 'True', 'null': 'True', 'blank': 'True'}),
-            'scopes': ('django.db.models.fields.related.ManyToManyField', [], {'symmetrical': 'False', 'to': "orm['oauthost.Scope']", 'null': 'True', 'blank': 'True'}),
-            'user': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['auth.User']", 'null': 'True', 'blank': 'True'})
-        }
-    }
-
-    complete_apps = ['oauthost']
+    operations = [
+        migrations.CreateModel(
+            name='AuthorizationCode',
+            fields=[
+                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('date_issued', models.DateTimeField(auto_now_add=True, verbose_name='Issued at')),
+                ('code', models.CharField(help_text='Code issued upon authorization.', unique=True, max_length=7, verbose_name='Code')),
+                ('uri', oauthost.fields.URLSchemeField(help_text='The URI authorization is bound to.', verbose_name='Redirect URI')),
+            ],
+            options={
+                'verbose_name': 'Authorization code',
+                'verbose_name_plural': 'Authorization codes',
+            },
+            bases=(models.Model,),
+        ),
+        migrations.CreateModel(
+            name='Client',
+            fields=[
+                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('date_registered', models.DateTimeField(auto_now_add=True, verbose_name='Registered at')),
+                ('title', models.CharField(unique=True, max_length=100, verbose_name='Title')),
+                ('description', models.TextField(max_length=100, verbose_name='Description')),
+                ('link', models.URLField(help_text='Application webpage URL.', null=True, verbose_name='URL', blank=True)),
+                ('identifier', models.CharField(help_text='Public client identifier. <i>Generated automatically if empty.</i>.', unique=True, max_length=250, verbose_name='Identifier', blank=True)),
+                ('token_lifetime', models.IntegerField(help_text='Time in seconds after which token given to the application expires.', null=True, verbose_name='Token lifetime', blank=True)),
+                ('password', models.CharField(help_text='Secret that can be used along with an identifier as username to authenticate with HTTP Basic scheme.', max_length=250, verbose_name='Password', blank=True)),
+                ('type', models.IntegerField(default=1, help_text='<b>Confidential</b> &#8212; Clients capable of maintaining the confidentiality of their credentials, or capable of secure client authentication using other means.<br /> <b>Public</b> &#8212; Clients incapable of maintaining the confidentiality of their credentials, and incapable of secure client authentication via any other means', verbose_name='Type', choices=[(1, 'Confidential'), (2, 'Public')])),
+                ('hash_sign_supported', models.BooleanField(default=True, help_text='Should be checked if this client supports fragment component (#) in the HTTP "Location" response header field', verbose_name='Supports # in "Location"')),
+            ],
+            options={
+                'verbose_name': 'Client',
+                'verbose_name_plural': 'Clients',
+            },
+            bases=(models.Model,),
+        ),
+        migrations.CreateModel(
+            name='RedirectionEndpoint',
+            fields=[
+                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('uri', oauthost.fields.URLSchemeField(help_text='URI or URI scheme for authorization server to redirect client when an interaction with a resource owner is complete.', verbose_name='URI')),
+                ('client', models.ForeignKey(related_name='redirection_uris', verbose_name='Client', to='oauthost.Client')),
+            ],
+            options={
+                'verbose_name': 'Redirection Endpoint',
+                'verbose_name_plural': 'Redirection Endpoints',
+            },
+            bases=(models.Model,),
+        ),
+        migrations.CreateModel(
+            name='Scope',
+            fields=[
+                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('identifier', models.CharField(help_text='Scope identifier. Usually in form of `app_name:view_name`.', unique=True, max_length=100, verbose_name='Scope ID')),
+                ('title', models.CharField(help_text='Scope human-friendly name.', max_length=250, verbose_name='Scope title')),
+                ('status', models.PositiveIntegerField(default=1, db_index=True, verbose_name='Status', choices=[(1, 'Enabled'), (2, 'Disabled')])),
+            ],
+            options={
+                'ordering': ['title'],
+                'verbose_name': 'Scope',
+                'verbose_name_plural': 'Scopes',
+            },
+            bases=(models.Model,),
+        ),
+        migrations.CreateModel(
+            name='Token',
+            fields=[
+                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('date_issued', models.DateTimeField(auto_now_add=True, verbose_name='Issued at')),
+                ('expires_at', models.DateTimeField(null=True, verbose_name='Expires at', blank=True)),
+                ('access_token', models.CharField(help_text='Token to be used to access resources.', unique=True, max_length=32, verbose_name='Access Token')),
+                ('refresh_token', models.CharField(null=True, max_length=32, blank=True, help_text='Token to be used to refresh access token.', unique=True, verbose_name='Refresh Token')),
+                ('access_token_type', models.CharField(default='bearer', help_text='Access token type client uses to apply the appropriate authorization method.', max_length=100, verbose_name='Type', choices=[(b'bearer', b'Bearer')])),
+                ('client', models.ForeignKey(verbose_name='Client', to='oauthost.Client', help_text='The client application token is issued for.')),
+                ('code', models.ForeignKey(blank=True, to='oauthost.AuthorizationCode', help_text='Authorization code used to generate this token.', null=True, verbose_name='Code')),
+                ('scopes', models.ManyToManyField(help_text='The scopes token is restricted to.', to='oauthost.Scope', null=True, verbose_name='Scopes', blank=True)),
+                ('user', models.ForeignKey(blank=True, to=settings.AUTH_USER_MODEL, help_text='The user token is issued for.', null=True, verbose_name='User')),
+            ],
+            options={
+                'verbose_name': 'Token',
+                'verbose_name_plural': 'Tokens',
+            },
+            bases=(models.Model,),
+        ),
+        migrations.AddField(
+            model_name='client',
+            name='scopes',
+            field=models.ManyToManyField(help_text='The scopes client is restricted to. <i>All registered scopes will be available for the client if none selected.</i>', to='oauthost.Scope', null=True, verbose_name='Scopes', blank=True),
+            preserve_default=True,
+        ),
+        migrations.AddField(
+            model_name='client',
+            name='user',
+            field=models.ForeignKey(verbose_name='Registrant', to=settings.AUTH_USER_MODEL, help_text='User who registered this client.'),
+            preserve_default=True,
+        ),
+        migrations.AddField(
+            model_name='authorizationcode',
+            name='client',
+            field=models.ForeignKey(verbose_name='Client', to='oauthost.Client', help_text='The client authorization is granted for.'),
+            preserve_default=True,
+        ),
+        migrations.AddField(
+            model_name='authorizationcode',
+            name='scopes',
+            field=models.ManyToManyField(help_text='The scopes token issued with this code should be restricted to.', to='oauthost.Scope', null=True, verbose_name='Scopes', blank=True),
+            preserve_default=True,
+        ),
+        migrations.AddField(
+            model_name='authorizationcode',
+            name='user',
+            field=models.ForeignKey(verbose_name='User', to=settings.AUTH_USER_MODEL, help_text='The user authorization is granted for.'),
+            preserve_default=True,
+        ),
+    ]

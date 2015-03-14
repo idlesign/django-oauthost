@@ -9,5 +9,6 @@ recursive-include docs .py
 
 recursive-include oauthost/locale *
 recursive-include oauthost/migrations *
+recursive-include oauthost/south_migrations *
 recursive-include oauthost/management *
 recursive-include oauthost/templates *

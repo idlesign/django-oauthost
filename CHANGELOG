@@ -1,6 +1,12 @@
 django-oauthost changelog
 =========================
 
+
+v0.4.0
+------
++ Added Django 1.7+ config and migrations.
+
+
 v0.3.0
 ------
 + Added Russian loco.
