@@ -3,7 +3,8 @@ from .models import Client, Scope, RedirectionEndpoint
 from .exceptions import OauthostException
 
 
-def register_client(title, identifier, redirect_uri, registrant, scopes_list=None, register_unknown_scopes=True, token_lifetime=3600, public=True, client_params=None):
+def register_client(title, identifier, redirect_uri, registrant, scopes_list=None, register_unknown_scopes=True,
+                    token_lifetime=3600, public=True, client_params=None):
     """Registers a client.
 
     :param title: client title.
@@ -11,7 +12,8 @@ def register_client(title, identifier, redirect_uri, registrant, scopes_list=Non
     :param redirect_uri: redirect URI to associate with this client
     :param registrant: user who registeres this client
     :param scopes_list: a list of scope identifiers or Scope objects to restrict the client to.
-    :param register_unknown_scopes: this allows to raise OauthostException if scopes_list contans an unregistered item instead of registering it.
+    :param register_unknown_scopes: this allows to raise OauthostException if scopes_list
+        contans an unregistered item instead of registering it.
     :param token_lifetime: lifetime for tokens that'll issued to this client
     :param public: flag to allow, switching from public client type to confidential
     :param client_params: arbitary parameters to build a Client object from
@@ -101,6 +103,7 @@ class PistonAuthHelper(object):
 
     def __init__(self, target_scope):
         self.target_scope = target_scope
+        self.auth_response = None
 
     def is_authenticated(self, request):
         self.auth_response = auth_handler_response(request, scope=self.target_scope)

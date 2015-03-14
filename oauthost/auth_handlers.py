@@ -98,10 +98,14 @@ class BearerAuthHandler(object):
             additional_params = {
                 'error': self._error, 'error_description': current_error[1]
             }
-            additional_params = ',' . join( [ '%s="%s"' % (i[0], i[1]) for i in additional_params.items() ]  )
+            additional_params = ',' . join(['%s="%s"' % (i[0], i[1]) for i in additional_params.items()])
             context = RequestContext(self._request)
-            self._response = HttpResponse(content=loader.render_to_string(TEMPLATE_RESTRICTED,
-                    {'oauthost_title': _('Access Restricted')}, context), status=current_error[0])
+            self._response = HttpResponse(
+                content=loader.render_to_string(
+                    TEMPLATE_RESTRICTED, {'oauthost_title': _('Access Restricted')}, context
+                ),
+                status=current_error[0]
+            )
             self._response['WWW-Authenticate'] = 'Bearer %s' % additional_params
 
     def response(self):

@@ -2,7 +2,7 @@ from functools import wraps
 
 from django.utils.decorators import available_attrs
 
-from .utils import auth_handler_response
+from .toolbox import auth_handler_response
 
 
 def oauth_required(scope=None, scope_auto=False):

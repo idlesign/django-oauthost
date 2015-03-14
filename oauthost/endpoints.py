@@ -359,23 +359,23 @@ class TokenEndpoint(EndpointBase):
                 except (TypeError, UnicodeDecodeError, AttributeError):
                     pass
         else:
-            """
-            SPEC:
-               Alternatively, the authorization server MAY support including the
-               client credentials in the request-body using the following
-               parameters: client_id, client_secret.
 
-               Including the client credentials in the request-body using the two
-               parameters is NOT RECOMMENDED and SHOULD be limited to clients unable
-               to directly utilize the HTTP Basic authentication scheme (or other
-               password-based HTTP authentication schemes).  The parameters can only
-               be transmitted in the request-body and MUST NOT be included in the
-               request URI.
+            # SPEC:
+            #    Alternatively, the authorization server MAY support including the
+            #    client credentials in the request-body using the following
+            #    parameters: client_id, client_secret.
+            #
+            #    Including the client credentials in the request-body using the two
+            #    parameters is NOT RECOMMENDED and SHOULD be limited to clients unable
+            #    to directly utilize the HTTP Basic authentication scheme (or other
+            #    password-based HTTP authentication schemes).  The parameters can only
+            #    be transmitted in the request-body and MUST NOT be included in the
+            #    request URI.
+            #
+            #    The parameters can only
+            #    be transmitted in the request-body and MUST NOT be included in the
+            #    request URI.
 
-               The parameters can only
-               be transmitted in the request-body and MUST NOT be included in the
-               request URI.
-            """
             client_id = self.input_params.get('client_id')
             client_password = self.input_params.get('client_secret')
 
@@ -385,19 +385,17 @@ class TokenEndpoint(EndpointBase):
             except ObjectDoesNotExist:
                 client = None
 
-            """
-            SPEC:
+            # SPEC:
+            #
+            #    A client MAY use the "client_id" request parameter to identify itself
+            #    when sending requests to the token endpoint.  In the
+            #    "authorization_code" "grant_type" request to the token endpoint, an
+            #    unauthenticated client MUST send its "client_id" to prevent itself
+            #    from inadvertently accepting a code intended for a client with a
+            #    different "client_id".  This protects the client from substitution of
+            #    the authentication code.  (It provides no additional security for the
+            #    protected resource.)
 
-               A client MAY use the "client_id" request parameter to identify itself
-               when sending requests to the token endpoint.  In the
-               "authorization_code" "grant_type" request to the token endpoint, an
-               unauthenticated client MUST send its "client_id" to prevent itself
-               from inadvertently accepting a code intended for a client with a
-               different "client_id".  This protects the client from substitution of
-               the authentication code.  (It provides no additional security for the
-               protected resource.)
-
-            """
             if client is not None:
                 if client.password.strip() != '' and client.password != client_password:
                     client = None
@@ -444,16 +442,14 @@ class TokenEndpoint(EndpointBase):
         except ObjectDoesNotExist:
             raise ErrorTokenEndpointRedirect(self.ERROR_INVALID_GRANT, 'Invalid authorization code is supplied.')
 
-        """
-        SPEC:
+        # SPEC:
+        #
+        #     If an authorization code is used more than
+        #     once, the authorization server MUST deny the request and SHOULD
+        #     revoke (when possible) all tokens previously issued based on
+        #     that authorization code.  The authorization code is bound to
+        #     the client identifier and redirection URI.
 
-            If an authorization code is used more than
-            once, the authorization server MUST deny the request and SHOULD
-            revoke (when possible) all tokens previously issued based on
-            that authorization code.  The authorization code is bound to
-            the client identifier and redirection URI.
-
-        """
         previous_tokens = Token.objects.filter(code=code).all()
         if len(previous_tokens) > 0:
             previous_tokens.delete()

@@ -11,8 +11,10 @@ from oauthost.models import Scope
 class Command(BaseCommand):
 
     args = '<app_name app_name ...>'
-    help = '''Registers OAuth2 scopes from application views in form of `<application_name>:<decorated_view_name>`.
-It requires views.py to reside in application directory. Use @oauth_required to decorate view which requires scope syncing.'''
+    help = (
+        'Registers OAuth2 scopes from application views in form of `<application_name>:<decorated_view_name>`.'
+        'It requires views.py to reside in application directory. Use @oauth_required to decorate view '
+        'which requires scope syncing.')
 
     def handle(self, *args, **options):
 
