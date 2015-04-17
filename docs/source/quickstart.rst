@@ -30,13 +30,10 @@ Check list
 
   `django.middleware.csrf.CsrfViewMiddleware`
 
-* TEMPLATE_CONTEXT_PROCESSORS has
+* TEMPLATE_CONTEXT_PROCESSORS has `django.core.context_processors.request`
+  For Django 1.8+: `django.template.context_processors.request` should be defined in ``TEMPLATES/OPTIONS/context_processors``.
 
-  `django.core.context_processors.request`
-
-* INSTALLED_APPS has
-
-  `oauthost`
+* INSTALLED_APPS has `oauthost`
 
 
 Step by step
