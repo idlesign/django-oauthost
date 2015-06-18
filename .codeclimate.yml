@@ -1,0 +1,11 @@
+languages:
+  JavaScript: true
+  Python: true
+
+exclude_paths:
+- "oauthost/runtests.py"
+- "oauthost/tests.py"
+- "oauthost/tests/*"
+- "oauthost/migrations/*"
+- "oauthost/south_migrations/*"
+- "docs/*"
