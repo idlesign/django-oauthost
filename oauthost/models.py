@@ -238,7 +238,8 @@ class AuthorizationCode(models.Model):
     def __str__(self):
         return '%s' % self.code
 
-    def generate_code(self):
+    @classmethod
+    def generate_code(cls):
         """Code length: 7 chars."""
         return randrange(1000000, 9999999)
 
@@ -288,7 +289,8 @@ class Token(models.Model):
     def __str__(self):
         return '%s' % self.code
 
-    def generate_token(self):
+    @classmethod
+    def generate_token(cls):
         """Identifier length: 32 chars."""
         return str(uuid4()).replace('-', '')
 
