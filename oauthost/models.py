@@ -128,7 +128,7 @@ class Client(models.Model):
         Scope, verbose_name=_('Scopes'),
         help_text=_('The scopes client is restricted to. <i>All registered scopes will be available '
                     'for the client if none selected.</i>'),
-        null=True, blank=True)
+        blank=True)
     hash_sign_supported = models.BooleanField(
         _('Supports # in "Location"'),
         help_text=_('Should be checked if this client supports fragment component (#) in the HTTP "Location" '
@@ -148,7 +148,8 @@ class Client(models.Model):
     def __str__(self):
         return '%s' % self.title
 
-    def generate_indentifier(self):
+    @classmethod
+    def generate_indentifier(cls):
         """Identifier length: 32 chars."""
         return str(uuid4()).replace('-', '')
 
@@ -228,7 +229,7 @@ class AuthorizationCode(models.Model):
     uri = URLSchemeField(_('Redirect URI'), help_text=_('The URI authorization is bound to.'))
     scopes = models.ManyToManyField(
         Scope, verbose_name=_('Scopes'),
-        help_text=_('The scopes token issued with this code should be restricted to.'), null=True, blank=True)
+        help_text=_('The scopes token issued with this code should be restricted to.'), blank=True)
 
     class Meta(object):
         verbose_name = _('Authorization code')
@@ -278,7 +279,7 @@ class Token(models.Model):
         AuthorizationCode, verbose_name=_('Code'), help_text=_('Authorization code used to generate this token.'),
         null=True, blank=True)
     scopes = models.ManyToManyField(
-        Scope, verbose_name=_('Scopes'), help_text=_('The scopes token is restricted to.'), null=True, blank=True)
+        Scope, verbose_name=_('Scopes'), help_text=_('The scopes token is restricted to.'), blank=True)
 
     class Meta(object):
         verbose_name = _('Token')
