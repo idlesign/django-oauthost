@@ -264,7 +264,7 @@ class Token(models.Model):
     date_issued = models.DateTimeField(_('Issued at'), auto_now_add=True)
     expires_at = models.DateTimeField(_('Expires at'), null=True, blank=True)
     access_token = models.CharField(
-        _('Access Token'), max_length=32, help_text=_('Token to be used to access resources.'), unique=True)
+        _('Access Token'), max_length=32, help_text=_('Token to be used to access resources.'), unique=True, blank=True)
     refresh_token = models.CharField(
         _('Refresh Token'), max_length=32, help_text=_('Token to be used to refresh access token.'),
         unique=True, null=True, blank=True)
