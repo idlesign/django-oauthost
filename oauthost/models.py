@@ -154,7 +154,7 @@ class Client(models.Model):
         return str(uuid4()).replace('-', '')
 
     def save(self, force_insert=False, force_update=False, **kwargs):
-        if self.identifier == '':
+        if not self.identifier:
             while True:
                 self.identifier = self.generate_indentifier()
                 try:
@@ -222,7 +222,9 @@ class AuthorizationCode(models.Model):
 
     # A maximum authorization code lifetime of 10 minutes is RECOMMENDED
     date_issued = models.DateTimeField(_('Issued at'), auto_now_add=True)
-    code = models.CharField(_('Code'), max_length=7, help_text=_('Code issued upon authorization.'), unique=True)
+    code = models.CharField(
+        _('Code'), max_length=7, unique=True, blank=True,
+        help_text=_('Code issued upon authorization.'))
     user = models.ForeignKey(USER_MODEL, verbose_name=_('User'), help_text=_('The user authorization is granted for.'))
     client = models.ForeignKey(
         Client, verbose_name=_('Client'), help_text=_('The client authorization is granted for.'))
@@ -244,7 +246,7 @@ class AuthorizationCode(models.Model):
         return randrange(1000000, 9999999)
 
     def save(self, force_insert=False, force_update=False, **kwargs):
-        if self.code == '':
+        if not self.code:
             while True:
                 self.code = self.generate_code()
                 try:
@@ -295,7 +297,7 @@ class Token(models.Model):
         return str(uuid4()).replace('-', '')
 
     def save(self, force_insert=False, force_update=False, **kwargs):
-        if self.access_token == '':
+        if not self.access_token:
             while True:
                 self.access_token = self.generate_token()
                 self.refresh_token = self.generate_token()
