@@ -31,15 +31,17 @@ class BearerAuthHandler(object):
     def fetch_token(self):
         token = None
 
+        request = self._request
+
         # Authorization Request Header Field
-        authorization_method = self._request.META.get('HTTP_AUTHORIZATION')
+        authorization_method = request.META.get('HTTP_AUTHORIZATION')
         if authorization_method is not None:
             auth_method_type, auth_method_value = authorization_method.split(' ', 1)
             if auth_method_type == 'Bearer':
                 token = auth_method_value
         else:
             # Form-Encoded Body Parameter or URI Query Parameter
-            token = self._request.REQUEST.get('access_token')
+            token = request.POST.get('access_token', request.GET.get('access_token'))
 
         if token is None:
             self._error = 'invalid_request'
