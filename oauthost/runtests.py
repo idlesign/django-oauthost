@@ -20,6 +20,9 @@ def main():
                 'django.contrib.sessions.middleware.SessionMiddleware',
                 'django.contrib.auth.middleware.AuthenticationMiddleware',
             ),
+            TEMPLATE_CONTEXT_PROCESSORS=tuple(global_settings.TEMPLATE_CONTEXT_PROCESSORS) + (
+                'django.core.context_processors.request',
+            )
         )
 
     try:  # Django 1.7 +

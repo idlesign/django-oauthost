@@ -87,12 +87,15 @@ class ErrorAuthorizeEndpointRedirect(EndpointError):
 class EndpointBase(object):
     """Basic class for endpoint classes."""
 
-    _input_params_source = 'POST'
     state = None
 
     def __init__(self, request):
         self.request = request
-        self.input_params = self.filter_input_params(getattr(self.request, self._input_params_source))
+        self.input_params = self.filter_input_params(self.get_input_params(request))
+
+    @classmethod
+    def get_input_params(cls, request):
+        return request.POST
 
     @classmethod
     def filter_input_params(cls, input_params):
@@ -652,7 +655,6 @@ class AuthorizeEndpoint(EndpointBase):
     ERROR_SERVER_ERROR = 'server_error'
     ERROR_TEMPORARILY_UNAVAILABLE = 'temporarily_unavailable'
 
-    _input_params_source = 'REQUEST'
     _allowed_response_types = ('code', 'token')
 
     def get_client(self):
@@ -672,6 +674,11 @@ class AuthorizeEndpoint(EndpointBase):
             raise ErrorOauthostPage(_('Invalid client ID is supplied.'), self.request)
 
         return client
+
+    @classmethod
+    def get_input_params(cls, request):
+        post = request.POST
+        return post if post else request.GET
 
     def get_redirect_url(self, client):
         """Calculates a redirect URI.
