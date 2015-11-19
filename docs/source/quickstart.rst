@@ -9,7 +9,7 @@ Quick start
 
 .. warning::
 
-    If you are using a version Django < 1.7 AND are using a version of South < 1.0, add this to your settings:
+    For Django < 1.7 with South < 1.0, add this to your settings:
 
     .. code-block:: python
 
@@ -18,33 +18,34 @@ Quick start
         }
 
 
+* Do not use Django's cookie-based session engine with ``oauthost``, it may cause security issues.
 
-Check list
-----------
+* Do not use OAuth1 clients.
 
-* Do not use Django's brand new cookie-based session engine with oauthost, it may cause security issues.
-* Do not use OAuth1 clients as they probably won't work.
-* MIDDLEWARE_CLASSES has
+* Verify ``MIDDLEWARE_CLASSES`` setting has
 
-  `django.contrib.sessions.middleware.SessionMiddleware`
+  `django.contrib.sessions.middleware.SessionMiddleware` and `django.middleware.csrf.CsrfViewMiddleware`
 
-  `django.middleware.csrf.CsrfViewMiddleware`
+* Verify ``TEMPLATE_CONTEXT_PROCESSORS`` has `django.core.context_processors.request`
 
-* TEMPLATE_CONTEXT_PROCESSORS has `django.core.context_processors.request`
-  For Django 1.8+: `django.template.context_processors.request` should be defined in ``TEMPLATES/OPTIONS/context_processors``.
+  .. note::
 
-* INSTALLED_APPS has `oauthost`
+      For Django 1.8+: `django.template.context_processors.request` should be defined in ``TEMPLATES/OPTIONS/context_processors``.
+
+* Add ``oauthost`` into ``INSTALLED_APPS``
 
 
 Step by step
 ------------
 
-0. Initialize DB tables for oauthost, run from command line:
+0. Initialize DB tables for ``oauthost``. Run from command line:
 
    ``python manage.py migrate``
 
 
-1. Attach `oauthost.urls` to project `urls` (in `urls.py`)::
+1. Attach `oauthost.urls` to project URLs file (e.g. `urls.py`)
+
+    .. code-block:: python
 
         from oauthost.urls import urlpatterns as oauthost_urlpatterns
 
@@ -52,60 +53,65 @@ Step by step
 
         urlpatterns += oauthost_urlpatterns
 
-    Authorization endpoint is available at `{ BASE_URL }auth/`.
 
-    Token endpoint is available at `{ BASE_URL }token/`.
+    Now authorization endpoint is available at `{ BASE_URL }auth/`.
 
-2. Decorate application views which require OAuth 2 authorization with `oauth_required` (let's suppose those are views from `polls` application)::
+    And token endpoint is available at `{ BASE_URL }token/`.
 
-    from oauthost.decorators import oauth_required
+2. Decorate application views which require OAuth 2 authorization with `@oauth_required` (let's suppose those are views from `polls` application):
 
-    @oauth_required(scope='my_polls:my_stats')
-    def stats(request, poll_id):
-        """Scope associated with this view is `my_polls:my_stats`."""
-        ...
+    .. code-block:: python
 
-    @oauth_required(scope_auto=True)
-    def results(request, poll_id):
-        """Scope for this view would be evaluated to `polls:results`."""
-        ...
+        from oauthost.decorators import oauth_required
 
-3. Use Django's Admin site contrib package to manipulate oauthost data (e.g. register clients).
+
+        @oauth_required(scope='my_polls:my_stats')
+        def stats(request, poll_id):
+            """Scope associated with this view is `my_polls:my_stats`."""
+
+        @oauth_required(scope_auto=True)
+        def results(request, poll_id):
+            """Scope for this view would be evaluated to `polls:results`."""
+
+
+3. Use Django Admin site contrib package to manipulate ``oauthost`` data (e.g. register clients).
 
     3.1. Register *scopes* for your Django application.
 
-    Scope identifiers examples: `polls:index`, `polls:detail`, `polls:results`.
+        Scope identifiers examples: `polls:index`, `polls:detail`, `polls:results`.
 
-    .. note::
+        .. note::
 
-        You can use ``syncscopes`` management command which automatically creates
-        scopes for `oauth_required` decorated views available in application(s), which
-        names are passed to the command::
+            You can use ``syncscopes`` management command which automatically creates
+            scopes for `oauth_required` decorated views available in application(s), which
+            names are passed to the command:
 
-            python manage.py syncscopes polls
+            .. code-block:: bash
+
+                python manage.py syncscopes polls
+
 
     3.2. Register a **client** which could be granted with access to your resources.
 
-    .. note::
+        .. note::
 
-        Just right there on client registration page you can set up redirection endpoints,
-        register authorization codes and issue tokens. Latter two should normally be
-        issued to client itself as described in paragraph no 4.
+            Just right there on client registration page you can set up redirection endpoints,
+            register authorization codes and issue tokens. Latter two should normally be
+            issued to a client itself as described in paragraph no 4.
 
 
-    Or use API::
+        Or use API:
 
-        from oauthost.toolbox import register_client
+            .. code-block:: python
 
-        ...
+                from oauthost.toolbox import register_client
 
-        # Define some scopes to restrict our client to.
-        my_scopes = ['polls:vote', 'polls:stats']
 
-        # `user` might be `request.user` if in a view.
-        register_client('My OAuth Client', '1234', 'http://myapp.com/', user, scopes_list=my_scopes)
+                # Define some scopes to restrict our client to.
+                my_scopes = ['polls:vote', 'polls:stats']
 
-        ...
+                # `user` might be `request.user` if in a view.
+                register_client('My OAuth Client', '1234', 'http://myapp.com/', user, scopes_list=my_scopes)
 
 
 Tokens and protected resources
