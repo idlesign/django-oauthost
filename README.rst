@@ -17,8 +17,8 @@ http://github.com/idlesign/django-oauthost
 .. image:: https://img.shields.io/travis/idlesign/django-oauthost/master.svg
     :target: https://travis-ci.org/idlesign/django-oauthost
 
-.. image:: https://img.shields.io/codeclimate/github/idlesign/django-oauthost.svg
-   :target: https://codeclimate.com/github/idlesign/django-oauthost
+.. image:: https://landscape.io/github/idlesign/django-oauthost/master/landscape.svg?style=flat
+   :target: https://landscape.io/github/idlesign/django-oauthost/master
 
 
 What's that
@@ -28,21 +28,26 @@ What's that
 
 It allows to guard your application views with OAuth 2.0 in quite a trivial way.
 
-1. Register your client using Django Admin or API::
+1. Register your client using Django Admin or API:
+
+.. code-block:: python
 
     from oauthost.toolbox import register_client
 
     ...
 
-    # Define some scopes to restrict our client to.
+    # Define some scopes to restrict our client to (if required).
     my_scopes = ['polls:vote']
 
     # `user` might be `request.user` if in a view.
-    register_client('My OAuth Client', 'my_client', 'http://someurl.com/myclient/', user, scopes_list=my_scopes)
+    register_client('My OAuth Client', 'my_client',
+                    'http://someurl.com/myclient/', user, scopes_list=my_scopes)
 
     ...
 
-2. Decorate your views with `oauth_required` (suppose in `polls.views`)::
+2. Decorate your views with `oauth_required` (suppose in `polls.views`):
+
+.. code-block:: python
 
     from oauthost.decorators import oauth_required
 
@@ -51,7 +56,9 @@ It allows to guard your application views with OAuth 2.0 in quite a trivial way.
         ...
 
 
-3. Attach `oauthost.urls` to project `urls` (in `urls.py`)::
+3. Attach `oauthost.urls` to project `urls` (in `urls.py`):
+
+.. code-block:: python
 
         from oauthost.urls import urlpatterns as oauthost_urlpatterns
 
