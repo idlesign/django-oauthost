@@ -5,6 +5,9 @@ django-oauthost changelog
 v0.4.0
 ------
 + Added Django 1.7+ config and migrations.
++ Added Russian localization.
+* Django 1.8, 1.9, 1.10 adaptations
+* Minor code improvements.
 
 
 v0.3.0
