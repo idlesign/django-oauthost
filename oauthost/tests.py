@@ -5,9 +5,9 @@ from django.test.client import Client as TestClient
 from django.contrib.auth.models import User
 from django.conf import settings
 
-from .models import AuthorizationCode, Token, Client, RedirectionEndpoint, Scope
-from .toolbox import register_client
-from .exceptions import OauthostException
+from oauthost.models import AuthorizationCode, Token, Client, RedirectionEndpoint, Scope
+from oauthost.toolbox import register_client
+from oauthost.exceptions import OauthostException
 
 
 URL_TOKEN = '/token/'
