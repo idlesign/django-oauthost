@@ -67,10 +67,7 @@ It allows to guard your application views with OAuth 2.0 in quite a trivial way.
         urlpatterns += oauthost_urlpatterns
 
 
-   After that authorization endpoint is available at `{ BASE_URL }auth/`.
-
-   Token endpoint is available at `{ BASE_URL }token/`.
-
+Now authorization endpoint is available at `{ BASE_URL }auth/` and token endpoint is available at `{ BASE_URL }token/`.
 
 That's all for **oauthost**, connect using your client.
 
