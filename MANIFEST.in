@@ -4,8 +4,8 @@ include LICENSE
 include CHANGELOG
 
 include docs/Makefile
-recursive-include docs .rst
-recursive-include docs .py
+recursive-include docs *.rst
+recursive-include docs *.py
 
 recursive-include oauthost/locale *
 recursive-include oauthost/migrations *
