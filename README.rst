@@ -5,9 +5,6 @@ http://github.com/idlesign/django-oauthost
 .. image:: https://img.shields.io/pypi/v/django-oauthost.svg
     :target: https://pypi.python.org/pypi/django-oauthost
 
-.. image:: https://img.shields.io/pypi/dm/django-oauthost.svg
-    :target: https://pypi.python.org/pypi/django-oauthost
-
 .. image:: https://img.shields.io/pypi/l/django-oauthost.svg
     :target: https://pypi.python.org/pypi/django-oauthost
 
