@@ -1,13 +1,7 @@
 from django import VERSION
+from django.conf.urls import url
 
 from .views import endpoint_authorize, endpoint_token
-
-try:
-    from django.conf.urls.defaults import url
-except ImportError:
-    # For Django 1.6
-    from django.conf.urls import url
-
 
 urlpatterns_list = [
     url(r'^auth/$', endpoint_authorize, name='oauthost_authorize'),

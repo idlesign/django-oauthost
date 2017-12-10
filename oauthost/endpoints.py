@@ -1,27 +1,22 @@
 import json
-from time import time
 from base64 import b64decode
 from datetime import datetime
+from time import time
 
 from django.conf import settings
 from django.contrib.auth import SESSION_KEY
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.utils.translation import ugettext_lazy as _
 
-from django import VERSION
-
-if VERSION >= (1, 5):
-    from django.contrib.auth import get_user_model
-    User = get_user_model()
-else:
-    from django.contrib.auth.models import User
-
 from .exceptions import EndpointError, OauthostException
 from .models import Client, AuthorizationCode, Token, Scope
 from .settings import TEMPLATE_AUTHORIZE, TEMPLATE_AUTHORIZE_ERROR, TEMPLATE_AUTHORIZE_PROCEED
 from .utils import get_remote_ip, LOGGER
+
+User = get_user_model()
 
 
 class ScopeException(OauthostException):

@@ -2,6 +2,11 @@ django-oauthost changelog
 =========================
 
 
+Unreleased
+----------
+* Dropped support for Python<3.4 and Django<1.7.
+
+
 v0.4.0
 ------
 + Added Django 1.7+ config and migrations.

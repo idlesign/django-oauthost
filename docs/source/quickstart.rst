@@ -7,17 +7,6 @@ Quick start
     *if your project is not in debug mode*, and will refuse to function
     if check fails.
 
-.. warning::
-
-    For Django < 1.7 with South < 1.0, add this to your settings:
-
-    .. code-block:: python
-
-        SOUTH_MIGRATION_MODULES = {
-            'oauthost': 'oauthost.south_migrations',
-        }
-
-
 * Do not use Django's cookie-based session engine with ``oauthost``, it may cause security issues.
 
 * Do not use OAuth1 clients.
