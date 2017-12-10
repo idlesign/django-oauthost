@@ -52,7 +52,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('uri', oauthost.fields.URLSchemeField(help_text='URI or URI scheme for authorization server to redirect client when an interaction with a resource owner is complete.', verbose_name='URI')),
-                ('client', models.ForeignKey(related_name='redirection_uris', verbose_name='Client', to='oauthost.Client')),
+                ('client', models.ForeignKey(related_name='redirection_uris', verbose_name='Client', to='oauthost.Client', on_delete=models.CASCADE)),
             ],
             options={
                 'verbose_name': 'Redirection Endpoint',
@@ -84,10 +84,10 @@ class Migration(migrations.Migration):
                 ('access_token', models.CharField(help_text='Token to be used to access resources.', unique=True, max_length=32, verbose_name='Access Token')),
                 ('refresh_token', models.CharField(null=True, max_length=32, blank=True, help_text='Token to be used to refresh access token.', unique=True, verbose_name='Refresh Token')),
                 ('access_token_type', models.CharField(default='bearer', help_text='Access token type client uses to apply the appropriate authorization method.', max_length=100, verbose_name='Type', choices=[(b'bearer', b'Bearer')])),
-                ('client', models.ForeignKey(verbose_name='Client', to='oauthost.Client', help_text='The client application token is issued for.')),
-                ('code', models.ForeignKey(blank=True, to='oauthost.AuthorizationCode', help_text='Authorization code used to generate this token.', null=True, verbose_name='Code')),
+                ('client', models.ForeignKey(verbose_name='Client', to='oauthost.Client', help_text='The client application token is issued for.', on_delete=models.CASCADE)),
+                ('code', models.ForeignKey(blank=True, to='oauthost.AuthorizationCode', help_text='Authorization code used to generate this token.', null=True, verbose_name='Code', on_delete=models.CASCADE)),
                 ('scopes', models.ManyToManyField(help_text='The scopes token is restricted to.', to='oauthost.Scope', null=True, verbose_name='Scopes', blank=True)),
-                ('user', models.ForeignKey(blank=True, to=settings.AUTH_USER_MODEL, help_text='The user token is issued for.', null=True, verbose_name='User')),
+                ('user', models.ForeignKey(blank=True, to=settings.AUTH_USER_MODEL, help_text='The user token is issued for.', null=True, verbose_name='User', on_delete=models.CASCADE)),
             ],
             options={
                 'verbose_name': 'Token',
@@ -104,13 +104,13 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='client',
             name='user',
-            field=models.ForeignKey(verbose_name='Registrant', to=settings.AUTH_USER_MODEL, help_text='User who registered this client.'),
+            field=models.ForeignKey(verbose_name='Registrant', to=settings.AUTH_USER_MODEL, help_text='User who registered this client.', on_delete=models.CASCADE),
             preserve_default=True,
         ),
         migrations.AddField(
             model_name='authorizationcode',
             name='client',
-            field=models.ForeignKey(verbose_name='Client', to='oauthost.Client', help_text='The client authorization is granted for.'),
+            field=models.ForeignKey(verbose_name='Client', to='oauthost.Client', help_text='The client authorization is granted for.', on_delete=models.CASCADE),
             preserve_default=True,
         ),
         migrations.AddField(
@@ -122,7 +122,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='authorizationcode',
             name='user',
-            field=models.ForeignKey(verbose_name='User', to=settings.AUTH_USER_MODEL, help_text='The user authorization is granted for.'),
+            field=models.ForeignKey(verbose_name='User', to=settings.AUTH_USER_MODEL, help_text='The user authorization is granted for.', on_delete=models.CASCADE),
             preserve_default=True,
         ),
     ]

@@ -23,6 +23,12 @@ def main():
         )
 
         try:
+            configure_kwargs['MIDDLEWARE'] = configure_kwargs['MIDDLEWARE_CLASSES']
+
+        except AttributeError:
+            pass  # Since Django 2.0
+
+        try:
             configure_kwargs['TEMPLATE_CONTEXT_PROCESSORS'] = tuple(global_settings.TEMPLATE_CONTEXT_PROCESSORS) + (
                 'django.core.context_processors.request',
             )

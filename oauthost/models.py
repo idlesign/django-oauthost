@@ -103,7 +103,9 @@ class Client(models.Model):
 
     date_registered = models.DateTimeField(_('Registered at'), auto_now_add=True)
     title = models.CharField(_('Title'), max_length=100, unique=True)
-    user = models.ForeignKey(USER_MODEL, verbose_name=_('Registrant'), help_text=_('User who registered this client.'))
+    user = models.ForeignKey(
+        USER_MODEL, verbose_name=_('Registrant'), help_text=_('User who registered this client.'),
+        on_delete=models.CASCADE)
     description = models.TextField(_('Description'), max_length=100)
     link = models.URLField(_('URL'), help_text=_('Application webpage URL.'), null=True, blank=True)
     identifier = models.CharField(
@@ -179,7 +181,8 @@ class RedirectionEndpoint(models.Model):
        redirection endpoints.
     """
 
-    client = models.ForeignKey(Client, verbose_name=_('Client'), related_name='redirection_uris')
+    client = models.ForeignKey(
+        Client, verbose_name=_('Client'), related_name='redirection_uris', on_delete=models.CASCADE)
 
     '''
     SPEC:
@@ -225,9 +228,12 @@ class AuthorizationCode(models.Model):
     code = models.CharField(
         _('Code'), max_length=7, unique=True, blank=True,
         help_text=_('Code issued upon authorization.'))
-    user = models.ForeignKey(USER_MODEL, verbose_name=_('User'), help_text=_('The user authorization is granted for.'))
+    user = models.ForeignKey(
+        USER_MODEL, verbose_name=_('User'), help_text=_('The user authorization is granted for.'),
+        on_delete=models.CASCADE)
     client = models.ForeignKey(
-        Client, verbose_name=_('Client'), help_text=_('The client authorization is granted for.'))
+        Client, verbose_name=_('Client'), help_text=_('The client authorization is granted for.'),
+        on_delete=models.CASCADE)
     uri = URLSchemeField(_('Redirect URI'), help_text=_('The URI authorization is bound to.'))
     scopes = models.ManyToManyField(
         Scope, verbose_name=_('Scopes'),
@@ -275,12 +281,14 @@ class Token(models.Model):
         help_text=_('Access token type client uses to apply the appropriate authorization method.'),
         choices=[(t[0], t[1]) for t in REGISTRY_TOKEN_TYPE], default=TOKEN_TYPE_BEARER)
     user = models.ForeignKey(
-        USER_MODEL, verbose_name=_('User'), help_text=_('The user token is issued for.'), null=True, blank=True)
+        USER_MODEL, verbose_name=_('User'), help_text=_('The user token is issued for.'), null=True, blank=True,
+        on_delete=models.CASCADE)
     client = models.ForeignKey(
-        Client, verbose_name=_('Client'), help_text=_('The client application token is issued for.'))
+        Client, verbose_name=_('Client'), help_text=_('The client application token is issued for.'),
+        on_delete=models.CASCADE)
     code = models.ForeignKey(
         AuthorizationCode, verbose_name=_('Code'), help_text=_('Authorization code used to generate this token.'),
-        null=True, blank=True)
+        null=True, blank=True, on_delete=models.CASCADE)
     scopes = models.ManyToManyField(
         Scope, verbose_name=_('Scopes'), help_text=_('The scopes token is restricted to.'), blank=True)
 
