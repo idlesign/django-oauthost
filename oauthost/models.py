@@ -28,7 +28,9 @@ class Scope(models.Model):
     identifier = models.CharField(
         _('Scope ID'), max_length=100, help_text=_('Scope identifier. Usually in form of `app_name:view_name`.'),
         unique=True)
+
     title = models.CharField(_('Scope title'), max_length=250, help_text=_('Scope human-friendly name.'))
+
     status = models.PositiveIntegerField(_('Status'), db_index=True, choices=STATUS_CHOICES, default=STATUS_ENABLED)
 
     class Meta(object):
@@ -102,23 +104,31 @@ class Client(models.Model):
     )
 
     date_registered = models.DateTimeField(_('Registered at'), auto_now_add=True)
+
     title = models.CharField(_('Title'), max_length=100, unique=True)
+
     user = models.ForeignKey(
         USER_MODEL, verbose_name=_('Registrant'), help_text=_('User who registered this client.'),
         on_delete=models.CASCADE)
+
     description = models.TextField(_('Description'), max_length=100)
+
     link = models.URLField(_('URL'), help_text=_('Application webpage URL.'), null=True, blank=True)
+
     identifier = models.CharField(
         _('Identifier'), max_length=250,
         help_text=_('Public client identifier. <i>Generated automatically if empty.</i>.'), unique=True, blank=True)
+
     token_lifetime = models.IntegerField(
         _('Token lifetime'), help_text=_('Time in seconds after which token given to the application expires.'),
         null=True, blank=True)
+
     password = models.CharField(
         _('Password'), max_length=250,
         help_text=_('Secret that can be used along with an identifier as username '
                     'to authenticate with HTTP Basic scheme.'),
         blank=True)
+
     type = models.IntegerField(
         _('Type'),
         help_text=_('<b>Confidential</b> &#8212; Clients capable of maintaining the confidentiality '
@@ -126,11 +136,13 @@ class Client(models.Model):
                     '<b>Public</b> &#8212; Clients incapable of maintaining the confidentiality of their credentials, '
                     'and incapable of secure client authentication via any other means'),
         choices=TYPE_CHOICES, default=TYPE_CONFIDENTIAL)
+
     scopes = models.ManyToManyField(
         Scope, verbose_name=_('Scopes'),
         help_text=_('The scopes client is restricted to. <i>All registered scopes will be available '
                     'for the client if none selected.</i>'),
         blank=True)
+
     hash_sign_supported = models.BooleanField(
         _('Supports # in "Location"'),
         help_text=_('Should be checked if this client supports fragment component (#) in the HTTP "Location" '

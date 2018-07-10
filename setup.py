@@ -1,26 +1,51 @@
+import io
 import os
-from setuptools import setup
-from oauthost import VERSION
+import re
+import sys
 
-f = open(os.path.join(os.path.dirname(__file__), 'README.rst'))
-readme = f.read()
-f.close()
+from setuptools import setup, find_packages
+
+PATH_BASE = os.path.dirname(__file__)
+
+
+def read_file(fpath):
+    """Reads a file within package directories."""
+    with io.open(os.path.join(PATH_BASE, fpath)) as f:
+        return f.read()
+
+
+def get_version():
+    """Returns version number, without module import (which can lead to ImportError
+    if some dependencies are unavailable before install."""
+    contents = read_file(os.path.join('oauthost', '__init__.py'))
+    version = re.search('VERSION = \(([^)]+)\)', contents)
+    version = version.group(1).replace(', ', '.').strip()
+    return version
+
 
 setup(
     name='django-oauthost',
-    version='.'.join(map(str, VERSION)),
+    version=get_version(),
     url='http://github.com/idlesign/django-oauthost',
 
     description='Reusable application for Django to protect your apps with OAuth 2.0.',
-    long_description=readme,
+    long_description=read_file('README.rst'),
     license='BSD 3-Clause License',
 
     author='Igor `idle sign` Starikov',
     author_email='idlesign@yandex.ru',
 
-    packages=['oauthost'],
+    packages=find_packages(),
     include_package_data=True,
     zip_safe=False,
+
+    setup_requires=[] + (['pytest-runner'] if 'test' in sys.argv else []),
+
+    test_suite='tests',
+    tests_require=[
+        'pytest',
+        'pytest-djangoapp>=0.7.1',
+    ],
 
     classifiers=[
         'Development Status :: 4 - Beta',

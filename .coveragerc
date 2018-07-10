@@ -1,3 +1,3 @@
 [run]
 include = oauthost/*
-omit = oauthost/migrations/*, oauthost/south_migrations/*, oauthost/runtests.py, oauthost/tests.py, oauthost/config.py, oauthost/admin.py
+omit = oauthost/migrations/*, oauthost/tests/*, oauthost/config.py, oauthost/admin.py
