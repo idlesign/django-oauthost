@@ -83,7 +83,7 @@ class TestToolbox(object):
 
 class TestEndpointToken(object):
 
-    def test_grant_authorization_code(self, settings, client):
+    def test_grant_authorization_code(self, settings, client, user):
 
         # Secure connection check
         with settings(DEBUG=False):
@@ -96,17 +96,13 @@ class TestEndpointToken(object):
         assert resp.status_code == 400
         assert resp.content_json['error'] == 'unsupported_grant_type'
 
-        user_1 = User(username='Fred')
-        user_1.set_password('12345')
-        user_1.save()
-
-        client_1 = Client(user=user_1, title='OClient')
+        client_1 = Client(user=user, title='OClient')
         client_1.save()
 
         redirect_1 = RedirectionEndpoint(client=client_1, uri='http://redirect-test.com')
         redirect_1.save()
 
-        code_1 = AuthorizationCode(user=user_1, client=client_1, uri=redirect_1.uri)
+        code_1 = AuthorizationCode(user=user, client=client_1, uri=redirect_1.uri)
         code_1.save()
 
         Scope(identifier='scope1').save()
