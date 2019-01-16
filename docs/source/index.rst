@@ -16,7 +16,7 @@ Requirements
 ----
 
 1. Python 2.7+, 3.5+
-2. Django 1.7+
+2. Django 1.8+
 3. Django Auth contrib enabled
 4. Django Admin site contrib enabled (for simple oauthost data manipulation).
 
