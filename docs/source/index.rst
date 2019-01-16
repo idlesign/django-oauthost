@@ -9,7 +9,7 @@ It allows to guard your applications views with OAuth 2.0 in quite a trivial way
 Requirements
 ------------
 
-1. Python 2.7+, 3.4+
+1. Python 2.7+, 3.5+
 2. Django 1.7+
 3. Django Auth contrib enabled
 4. Django Admin site contrib enabled (for simple oauthost data manipulation).
