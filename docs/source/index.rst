@@ -9,6 +9,12 @@ It allows to guard your applications views with OAuth 2.0 in quite a trivial way
 Requirements
 ------------
 
+.. image:: https://idlesign.github.io/lbc/py2-lbc.svg
+   :target: https://idlesign.github.io/lbc/
+   :alt: LBC Python 2
+
+----
+
 1. Python 2.7+, 3.5+
 2. Django 1.7+
 3. Django Auth contrib enabled
