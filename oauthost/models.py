@@ -4,7 +4,6 @@ from random import randrange
 from django.conf import settings
 from django.db import models, IntegrityError
 from django.utils.translation import ugettext_lazy as _
-from django.utils.encoding import python_2_unicode_compatible
 
 
 from .fields import URLSchemeField
@@ -14,7 +13,6 @@ from .settings import REGISTRY_TOKEN_TYPE, TOKEN_TYPE_BEARER
 USER_MODEL = getattr(settings, 'AUTH_USER_MODEL', 'auth.User')
 
 
-@python_2_unicode_compatible
 class Scope(models.Model):
 
     STATUS_ENABLED = 1
@@ -42,7 +40,6 @@ class Scope(models.Model):
         return '%s' % self.identifier
 
 
-@python_2_unicode_compatible
 class Client(models.Model):
 
     TYPE_CONFIDENTIAL = 1
@@ -181,7 +178,6 @@ class Client(models.Model):
             super(Client, self).save(force_insert, force_update, **kwargs)
 
 
-@python_2_unicode_compatible
 class RedirectionEndpoint(models.Model):
     """
     SPEC:
@@ -232,7 +228,6 @@ class RedirectionEndpoint(models.Model):
         return '%s' % self.uri
 
 
-@python_2_unicode_compatible
 class AuthorizationCode(models.Model):
 
     # A maximum authorization code lifetime of 10 minutes is RECOMMENDED
@@ -277,7 +272,6 @@ class AuthorizationCode(models.Model):
             super(AuthorizationCode, self).save(force_insert, force_update, **kwargs)
 
 
-@python_2_unicode_compatible
 class Token(models.Model):
 
     # A maximum authorization code lifetime of 10 minutes is RECOMMENDED
