@@ -20,9 +20,6 @@ http://github.com/idlesign/django-oauthost
 .. image:: https://img.shields.io/travis/idlesign/django-oauthost/master.svg
     :target: https://travis-ci.org/idlesign/django-oauthost
 
-.. image:: https://landscape.io/github/idlesign/django-oauthost/master/landscape.svg?style=flat
-   :target: https://landscape.io/github/idlesign/django-oauthost/master
-
 
 What's that
 -----------
