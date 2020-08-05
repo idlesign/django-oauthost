@@ -1,8 +1,0 @@
-strictness: medium
-uses:
-    - django
-autodetect: yes
-ignore-paths:
-    - docs
-    - oauthost/migrations
-    - oauthost/south_migrations
