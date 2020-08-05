@@ -5,11 +5,12 @@ from django.utils.decorators import available_attrs
 from .toolbox import auth_handler_response
 
 
-def oauth_required(scope=None, scope_auto=False):
+def oauth_required(scope: str = None, scope_auto: bool = False):
     """Views decorator checking user oauth token.
 
-    ``scope`` - scope identifier string to check token has access to the scope.
-    ``scope_auto`` - if *True* scope identifier will be built automatically
+    :param scope: scope identifier string to check token has access to the scope.
+
+    :param scope_auto: if *True* scope identifier will be built automatically
         using the following format: '<application_name>:<decorated_view_name>'.
         E.g.: for application named *polls* and having *detail* view scope
         would be *polls:detail*.

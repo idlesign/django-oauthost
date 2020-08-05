@@ -11,12 +11,14 @@ if 'south' in settings.INSTALLED_APPS:
 
 
 class URLShemeFormField(forms.URLField):
+
     def __init__(self, *args, **kwargs):
         super(URLShemeFormField, self).__init__(*args, **kwargs)
         del self.validators[-1]
 
 
 class URLSchemeField(models.URLField):
+
     def __init__(self, verbose_name=None, name=None, **kwargs):
         models.URLField.__init__(self, verbose_name, name, **kwargs)
         del self.validators[-1]

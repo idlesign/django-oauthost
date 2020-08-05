@@ -1,3 +1,4 @@
+
 class OauthostException(Exception):
     """Base oauthost exceptions. All the others should inherit from it."""
 

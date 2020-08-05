@@ -40,7 +40,7 @@ def client():
     return OAuthostClient()
 
 
-class TestToolbox(object):
+class TestToolbox:
 
     def test_register_client(self, user):
         scope1 = Scope(identifier='scope1')
@@ -81,7 +81,7 @@ class TestToolbox(object):
         assert uris[0].uri == 'http://client2url.com/client2/'
 
 
-class TestEndpointToken(object):
+class TestEndpointToken:
 
     def test_grant_authorization_code(self, settings, client, user):
 
@@ -182,7 +182,7 @@ class TestEndpointToken(object):
         assert resp.content_json['error'] == 'invalid_grant'
 
 
-class TestEndpointAuthorize(object):
+class TestEndpointAuthorize:
 
     def test_auth(self, settings, client, user):
 
@@ -309,7 +309,7 @@ class TestEndpointAuthorize(object):
         assert params['state'] == 'some_state_three'
 
 
-class TestGrants(object):
+class TestGrants:
 
     def test_authorization_code_unsafe(self, settings, client, user):
 

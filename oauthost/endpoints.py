@@ -2,12 +2,13 @@ import json
 from base64 import b64decode
 from datetime import datetime
 from time import time
+from typing import List, Union
 
 from django.conf import settings
 from django.contrib.auth import SESSION_KEY
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, HttpRequest
 from django.shortcuts import render
 from django.utils.translation import ugettext_lazy as _
 
@@ -22,19 +23,19 @@ User = get_user_model()
 class ScopeException(OauthostException):
     """Exceptions raised if scope conflict occures."""
 
-    def __init__(self, message):
-        self.message = message
+    def __init__(self, message: str):
+        self.message: str = message
 
 
 class ErrorOauthostPage(EndpointError):
     """This error is able to be rendered as oauthost page."""
 
-    def __init__(self, message, request, http_status=400):
+    def __init__(self, message: str, request: HttpRequest, http_status: int = 400):
         self.request = request
         self.message = message
         self.http_status = http_status
 
-    def as_response(self):
+    def as_response(self) -> HttpResponse:
         """For authorization endpoint. Renders a page with error description."""
         data_dict = {'oauthost_title': _('Error'), 'oauthost_error_text': self.message}
         return render(self.request, TEMPLATE_AUTHORIZE_ERROR, data_dict, status=self.http_status)
@@ -43,15 +44,17 @@ class ErrorOauthostPage(EndpointError):
 class ErrorTokenEndpointRedirect(EndpointError):
     """This error is able to perform a redirect from Token Endpoint."""
 
-    def __init__(self, error_type, message, http_status=400, additional_headers=None):
+    def __init__(self, error_type: str, message: str, http_status: int = 400, additional_headers: dict = None):
         self.error_type = error_type
         self.message = message
         self.http_status = http_status
+
         if additional_headers is None:
             additional_headers = {}
+
         self.additional_headers = additional_headers
 
-    def as_response(self):
+    def as_response(self) -> HttpResponse:
         """For token endpoint. Issues JSON error response."""
         return TokenEndpoint.build_response(
             {'error': self.error_type, 'error_description': self.message},
@@ -62,38 +65,47 @@ class ErrorTokenEndpointRedirect(EndpointError):
 class ErrorAuthorizeEndpointRedirect(EndpointError):
     """This error is able to perform a redirect from Authorize Endpoint."""
 
-    def __init__(self, error_type, message, redirect_uri, state, uri_fragment_supported=False):
+    def __init__(
+            self,
+            error_type: str,
+            message: str,
+            redirect_uri: str,
+            state: str,
+            uri_fragment_supported: bool = False
+    ):
         self.error_type = error_type
         self.message = message
         self.redirect_uri = redirect_uri
         self.state = state
         self.uri_fragment_supported = uri_fragment_supported
 
-    def as_response(self):
+    def as_response(self) -> HttpResponse:
         """For authorization endpoint. Issues error response."""
         doc = {'error': self.error_type, 'error_description': self.message}
+
         if self.state is not None:
             doc.update({'state': self.state})
+
         return HttpResponseRedirect(
             AuthorizeEndpoint.build_redirect_url(self.redirect_uri, doc, self.uri_fragment_supported)
         )
 
 
-class EndpointBase(object):
+class EndpointBase:
     """Basic class for endpoint classes."""
 
-    state = None
+    state: str = None
 
-    def __init__(self, request):
+    def __init__(self, request: HttpRequest):
         self.request = request
         self.input_params = self.filter_input_params(self.get_input_params(request))
 
     @classmethod
-    def get_input_params(cls, request):
-        return request.POST
+    def get_input_params(cls, request: HttpRequest) -> dict:
+        return request.POST.dict()
 
     @classmethod
-    def filter_input_params(cls, input_params):
+    def filter_input_params(cls, input_params: dict) -> dict:
         """Filters request parameters and returns filtered dictionary.
 
         SPEC: Parameters sent without a value MUST be treated as if they were omitted from the request.
@@ -105,7 +117,7 @@ class EndpointBase(object):
                 params_filtered[key] = value
         return params_filtered
 
-    def filter_scopes(self, client):
+    def filter_scopes(self, client: Client) -> List[Scope]:
         """Gets space delimited list of scopes from client request,
         and returns a list of scope objects, corrected according
         to auth server settings.
@@ -168,7 +180,7 @@ class EndpointBase(object):
         scopes_available_set = set(scopes_available.keys())
         unsupported = set(scopes_requested).difference(scopes_available_set)
         if unsupported:
-            raise ScopeException('Unsupported scope requested: %s.' % ' '.join(unsupported))
+            raise ScopeException(f"Unsupported scope requested: {' '.join(unsupported)}.")
 
         for scope_name in set(scopes_requested).intersection(scopes_available_set):
             scopes_filtered.append(scopes_available[scope_name])
@@ -176,8 +188,13 @@ class EndpointBase(object):
         return scopes_filtered
 
     @classmethod
-    def apply_scopes(cls, auth_obj, filtered_scopes):
-        """Link scopes to an auth object: Token or AuthorizationCode."""
+    def apply_scopes(cls, auth_obj: Union[Token, AuthorizationCode], filtered_scopes: List[Scope]):
+        """Link scopes to an auth object: Token or AuthorizationCode.
+
+        :param auth_obj:
+        :param filtered_scopes:
+
+        """
         if auth_obj is not None:
             for scope in filtered_scopes:
                 auth_obj.scopes.add(scope)
@@ -190,30 +207,35 @@ class EndpointBase(object):
         if not self.request.is_secure() and not settings.DEBUG:
             raise ErrorOauthostPage(_('OAuth 2.0 requires secure connection.'), self.request, http_status=403)
 
-    def get_response(self):
+    def get_response(self) -> HttpResponse:
         """Returns an endpoint response."""
         try:
             self.check_https()
             self.state = self.input_params.get('state')  # OPTIONAL
             response = self.process_request()
+
         except EndpointError as e:
             return e.as_response()
 
         return response
 
     @classmethod
-    def generate_token(cls, client, user, token_obj_params=None):
+    def generate_token(cls, client: Client, user: User, token_obj_params: dict = None) -> Token:
         """Returns an access token."""
+
         expires_in = client.token_lifetime
         expires_at = None
+
         if expires_in is not None:
             expires_at = datetime.fromtimestamp(int(time() + expires_in))
+
         if token_obj_params is None:
             token_obj_params = {}
+
         return Token(client=client, user=user, expires_at=expires_at, **token_obj_params)
 
     @classmethod
-    def build_token_document(cls, token, expires_in=None, with_refresh_token=True):
+    def build_token_document(cls, token: Token, expires_in: int = None, with_refresh_token: bool = True):
         """Returns a token document as a dict."""
         output_params = {
             'access_token': token.access_token,
@@ -231,11 +253,11 @@ class EndpointBase(object):
 
         return output_params
 
-    def get_client(self):
+    def get_client(self) -> Client:
         """Returns client object."""
         raise NotImplementedError()
 
-    def process_request(self):
+    def process_request(self) -> HttpResponse:
         """Main method performing client request processing."""
         raise NotImplementedError()
 
@@ -325,21 +347,25 @@ class TokenEndpoint(EndpointBase):
     _allowed_grant_types = ('authorization_code', 'password', 'client_credentials', 'refresh_token')
 
     @classmethod
-    def build_response(cls, data_dict, http_status=200, additional_headers=None):
+    def build_response(cls, data_dict: dict, http_status: int = 200, additional_headers: dict = None):
         """For token endpoint. Issues JSON response."""
+
         response = HttpResponse(
             content_type='application/json;charset=UTF-8',
             content=json.dumps(data_dict), status=http_status
         )
         response['Cache-Control'] = 'no-store'
         response['Pragma'] = 'no-cache'
+
         if additional_headers is None:
             additional_headers = {}
+
         for key, value in additional_headers.items():
             response[key] = value
+
         return response
 
-    def get_client(self):
+    def get_client(self) -> Client:
         """Returns client object."""
         client = None
         auth_error_headers = {}
@@ -347,6 +373,7 @@ class TokenEndpoint(EndpointBase):
         client_password = None
 
         authorization_method = self.request.META.get('Authorization')
+
         if authorization_method is not None:  # Authorization header detected.
             auth_method_type, auth_method_value = authorization_method.split(' ', 1)
             auth_error_headers['WWW-Authenticate'] = auth_method_type
@@ -354,6 +381,7 @@ class TokenEndpoint(EndpointBase):
             if auth_method_type == 'Basic':
                 try:
                     client_id, client_password = b64decode(auth_method_value).decode('utf-8').split(':')
+
                 except (TypeError, UnicodeDecodeError, AttributeError):
                     pass
         else:
@@ -405,24 +433,28 @@ class TokenEndpoint(EndpointBase):
 
         return client
 
-    def get_token_for_grant_type(self, grant_type, client):
+    def get_token_for_grant_type(self, grant_type: str, client: Client) -> Token:
         """Returns token object for a given grant type."""
 
         filtered_scopes = []
+
         if grant_type not in ('refresh_token', 'authorization_code'):  # For refresh we use initially granted scope.
             try:
                 filtered_scopes = self.filter_scopes(client)
+
             except ScopeException as e:
                 raise ErrorTokenEndpointRedirect(self.ERROR_INVALID_SCOPE, e.message)
 
-        method = getattr(self, 'handle_%s' % grant_type)
+        method = getattr(self, f'handle_{grant_type}')
+
         token = method(client)
         token.save()
+
         self.apply_scopes(token, filtered_scopes)
 
         return token
 
-    def handle_authorization_code(self, client):
+    def handle_authorization_code(self, client: Client) -> Token:
         """Access Token Request"""
 
         code = self.input_params.get('code')  # REQUIRED
@@ -430,13 +462,15 @@ class TokenEndpoint(EndpointBase):
 
         if code is None or redirect_uri is None:
             raise ErrorTokenEndpointRedirect(
-                self.ERROR_INVALID_REQUEST, 'Required param(s) are missing. Expected: `code` and `redirect_uri`.'
-            )
+                self.ERROR_INVALID_REQUEST,
+                'Required param(s) are missing. Expected: `code` and `redirect_uri`.')
 
         try:
             code = AuthorizationCode.objects.get(code=code)
+
         except ObjectDoesNotExist:
-            raise ErrorTokenEndpointRedirect(self.ERROR_INVALID_GRANT, 'Invalid authorization code is supplied.')
+            raise ErrorTokenEndpointRedirect(
+                self.ERROR_INVALID_GRANT, 'Invalid authorization code is supplied.')
 
         # SPEC:
         #
@@ -446,22 +480,24 @@ class TokenEndpoint(EndpointBase):
         #     that authorization code.  The authorization code is bound to
         #     the client identifier and redirection URI.
         previous_tokens = Token.objects.filter(code=code).all()
+
         if len(previous_tokens) > 0:
             previous_tokens.delete()
             code.delete()
+
             raise ErrorTokenEndpointRedirect(
-                self.ERROR_INVALID_GRANT, 'Authorization code is used more than once. Code and tokens are revoked.'
-            )
+                self.ERROR_INVALID_GRANT,
+                'Authorization code is used more than once. Code and tokens are revoked.')
 
         if code.uri != redirect_uri:
             raise ErrorTokenEndpointRedirect(
-                self.ERROR_INVALID_GRANT, 'Supplied URI does not match the URI associated with authorization code.'
-            )
+                self.ERROR_INVALID_GRANT,
+                'Supplied URI does not match the URI associated with authorization code.')
 
         if code.client.id != client.id:
             raise ErrorTokenEndpointRedirect(
-                self.ERROR_INVALID_GRANT, 'Authorization code supplied was issued to another client.'
-            )
+                self.ERROR_INVALID_GRANT,
+                'Authorization code supplied was issued to another client.')
 
         token = self.generate_token(client, code.user, {'code': code})
         token.save()
@@ -472,7 +508,7 @@ class TokenEndpoint(EndpointBase):
 
         return token
 
-    def handle_client_credentials(self, client):
+    def handle_client_credentials(self, client: Client) -> Token:
         """
         SPEC:
 
@@ -489,16 +525,15 @@ class TokenEndpoint(EndpointBase):
            clients.
 
         """
-
         if not client.is_confidential():
             raise ErrorTokenEndpointRedirect(
-                'client_credentials', 'This client type is not authorized to use this grant type.'
-            )
+                'client_credentials',
+                'This client type is not authorized to use this grant type.')
 
         # Let's suppose that the user is the one, who has registered the client.
         return self.generate_token(client, client.user)
 
-    def handle_password(self, client):
+    def handle_password(self, client: Client):
         """
         SPEC:
 
@@ -527,39 +562,51 @@ class TokenEndpoint(EndpointBase):
 
         if username is None or password is None:
             raise ErrorTokenEndpointRedirect(
-                self.ERROR_INVALID_REQUEST, 'Required param(s) are missing. Expected: `username` and `password`.'
-            )
+                self.ERROR_INVALID_REQUEST,
+                'Required param(s) are missing. Expected: `username` and `password`.')
 
         try:
             user = User.objects.get(username=username)
+
             if user.check_password(password):
                 return self.generate_token(client, user)
+
         except ObjectDoesNotExist:
             pass
 
-        raise ErrorTokenEndpointRedirect(self.ERROR_INVALID_GRANT, 'Supplied resource owner credentials are invalid.')
+        raise ErrorTokenEndpointRedirect(
+            self.ERROR_INVALID_GRANT,
+            'Supplied resource owner credentials are invalid.')
 
-    def handle_refresh_token(self, client):
+    def handle_refresh_token(self, client: Client) -> Token:
         """Refreshes an Access Token."""
         refresh_token = self.input_params.get('refresh_token')
 
         if refresh_token is None:
-            raise ErrorTokenEndpointRedirect(self.ERROR_INVALID_REQUEST, 'Required `refresh_token` param is missing.')
+            raise ErrorTokenEndpointRedirect(
+                self.ERROR_INVALID_REQUEST,
+                'Required `refresh_token` param is missing.')
 
         try:
             token = Token.objects.get(refresh_token=refresh_token)
+
         except ObjectDoesNotExist:
-            raise ErrorTokenEndpointRedirect(self.ERROR_INVALID_GRANT, 'Refresh token supplied is invalid.')
+            raise ErrorTokenEndpointRedirect(
+                self.ERROR_INVALID_GRANT,
+                'Refresh token supplied is invalid.')
+
         else:
             if token.client_id != client.id:
                 raise ErrorTokenEndpointRedirect(
-                    self.ERROR_INVALID_GRANT, 'Refresh token supplied was issued to another client.'
-                )
+                    self.ERROR_INVALID_GRANT,
+                    'Refresh token supplied was issued to another client.')
 
         # For refresh token grant we only swap token values.
         token.date_issued = datetime.now()
+
         token.access_token = token.generate_token()
         token.refresh_token = token.generate_token()
+
         return token
 
     def process_request(self):
@@ -652,30 +699,32 @@ class AuthorizeEndpoint(EndpointBase):
 
     _allowed_response_types = ('code', 'token')
 
-    def get_client(self):
+    def get_client(self) -> Client:
         """Returns client object."""
         client_id = self.input_params.get('client_id')  # REQUIRED
 
         if client_id is None:
             # Fail fast without a DB hit.
-            raise ErrorOauthostPage(_('Client ID must be supplied.'), self.request)
+            raise ErrorOauthostPage(
+                _('Client ID must be supplied.'), self.request)
 
         try:
             client = Client.objects.get(identifier=client_id)
+
         except ObjectDoesNotExist:
             LOGGER.error(
-                'Invalid client ID supplied. Value "%s" was sent from IP "%s".', client_id, get_remote_ip(self.request)
-            )
+                f'Invalid client ID supplied. Value "{client_id}" was sent from IP "{get_remote_ip(self.request)}".')
+
             raise ErrorOauthostPage(_('Invalid client ID is supplied.'), self.request)
 
         return client
 
     @classmethod
-    def get_input_params(cls, request):
-        post = request.POST
-        return post if post else request.GET
+    def get_input_params(cls, request: HttpRequest) -> dict:
+        post = request.POST.dict()
+        return post if post else request.GET.dict()
 
-    def get_redirect_url(self, client):
+    def get_redirect_url(self, client: Client) -> str:
         """Calculates a redirect URI.
         Returns a tuple: uri_from_request, uri_fixed_server
 
@@ -687,17 +736,21 @@ class AuthorizeEndpoint(EndpointBase):
 
         # Check redirection URI validity.
         if input_uri is None:
+
             # redirect_uri is optional and was not supplied.
             if len(registered_uris) == 1:
                 # There is only one URI associated with client, so we use it.
                 actual_uri = registered_uris[0]
+
             else:
                 # Several URIs are registered with the client, decision is ambiguous.
+
                 LOGGER.error(
-                    'Redirect URI was not supplied by client with ID "%s". Request from IP "%s".',
-                    client.id, get_remote_ip(self.request)
-                )
-                raise ErrorOauthostPage(_('Redirect URI should be supplied for a given client.'), self.request)
+                    f'Redirect URI was not supplied by client with ID "{client.id}". '
+                    f'Request from IP "{get_remote_ip(self.request)}".')
+
+                raise ErrorOauthostPage(
+                    _('Redirect URI should be supplied for a given client.'), self.request)
 
         # SPEC:
         #
@@ -705,14 +758,15 @@ class AuthorizeEndpoint(EndpointBase):
         #     to prevent the authorization endpoint from being used as an open redirector.
         if actual_uri not in registered_uris:
             LOGGER.error(
-                'An attempt to use an untrusted URI "%s" for client with ID "%s". Request from IP "%s".',
-                actual_uri, client.id, get_remote_ip(self.request)
-            )
-            raise ErrorOauthostPage(_('Redirection URI supplied is not associated with given client.'), self.request)
+                f'An attempt to use an untrusted URI "{actual_uri}" for client '
+                f'with ID "{client.id}". Request from IP "{get_remote_ip(self.request)}".')
+
+            raise ErrorOauthostPage(
+                _('Redirection URI supplied is not associated with given client.'), self.request)
 
         return actual_uri
 
-    def render_scopes_page(self, client, scopes):
+    def render_scopes_page(self, client: Client, scopes) -> HttpResponse:
         """Returns a response with oauthost page listing requested scopes."""
         dict_data = {
             'client': client,
@@ -721,28 +775,32 @@ class AuthorizeEndpoint(EndpointBase):
         }
         return render(self.request, TEMPLATE_AUTHORIZE, dict_data)
 
-    def request_auth_confirmation(self):
+    def request_auth_confirmation(self) -> HttpResponse:
         client = self.get_client()
         redirect_uri = self.get_redirect_url(client)
 
         state = self.input_params.get('state')  # RECOMMENDED
 
         response_type = self.input_params.get('response_type')  # REQUIRED
+
         if response_type not in self._allowed_response_types:
             raise ErrorAuthorizeEndpointRedirect(
-                self.ERROR_UNSUPPORTED_RESPONSE_TYPE, 'Unsupported response type requested', redirect_uri, state
-            )
+                self.ERROR_UNSUPPORTED_RESPONSE_TYPE,
+                'Unsupported response type requested', redirect_uri, state)
 
         try:
             filtered_scopes = self.filter_scopes(client)
+
         except ScopeException as e:
             raise ErrorAuthorizeEndpointRedirect(self.ERROR_INVALID_SCOPE, e.message, redirect_uri, state)
 
-        self.request.session['oauth_client_id'] = client.id
-        self.request.session['oauth_response_type'] = response_type
-        self.request.session['oauth_redirect_uri'] = redirect_uri
-        self.request.session['oauth_scopes_ids'] = [s.id for s in filtered_scopes]
-        self.request.session['oauth_state'] = state
+        session = self.request.session
+
+        session['oauth_client_id'] = client.id
+        session['oauth_response_type'] = response_type
+        session['oauth_redirect_uri'] = redirect_uri
+        session['oauth_scopes_ids'] = [scope.id for scope in filtered_scopes]
+        session['oauth_state'] = state
 
         return self.render_scopes_page(client, filtered_scopes)
 
@@ -751,24 +809,51 @@ class AuthorizeEndpoint(EndpointBase):
         self.request.session[SESSION_KEY] = None
 
     @classmethod
-    def build_redirect_url(cls, redirect_base, params, use_uri_fragment):
-        """For authorization endpoint. Builds up redirection URL."""
+    def build_redirect_url(cls, redirect_base: str, params: dict, use_uri_fragment: bool):
+        """For authorization endpoint. Builds up redirection URL.
+
+        :param redirect_base:
+        :param params:
+        :param use_uri_fragment:
+
+        """
         if use_uri_fragment:
-            redirect_base = '%s#' % redirect_base
+            redirect_base = f'{redirect_base}#'
+
         else:
             # SPEC: query component MUST be retained when adding additional query parameters.
             if redirect_base is None or '?' not in redirect_base:
-                redirect_base = '%s?' % redirect_base
-        return '%s%s' % (redirect_base, '&'.join(['%s=%s' % (key, value) for key, value in params.items()]))
+                redirect_base = f'{redirect_base}?'
 
-    def get_response_document(self, response_type, redirect_uri, client, params_as_uri_fragment, state):
-        """Returns a response object for a given response type."""
+        params_str = '&'.join(f'{key}={value}'for key, value in params.items())
+        return f'{redirect_base}{params_str}'
+
+    def get_response_document(
+            self,
+            response_type: str,
+            redirect_uri: str,
+            client: Client,
+            params_as_uri_fragment: bool,
+            state: str
+
+    ) -> HttpResponse:
+        """Returns a response object for a given response type.
+
+        :param response_type:
+        :param redirect_uri:
+        :param client:
+        :param params_as_uri_fragment:
+        :param state:
+
+        """
         try:
             filtered_scopes = self.filter_scopes(client)
-        except ScopeException as e:
-            raise ErrorAuthorizeEndpointRedirect(self.ERROR_INVALID_SCOPE, e.message, redirect_uri, state)
 
-        method = getattr(self, 'handle_%s' % response_type)
+        except ScopeException as e:
+            raise ErrorAuthorizeEndpointRedirect(
+                self.ERROR_INVALID_SCOPE, e.message, redirect_uri, state)
+
+        method = getattr(self, f'handle_{response_type}')
 
         output_params = method(client, redirect_uri, filtered_scopes)
 
@@ -784,12 +869,15 @@ class AuthorizeEndpoint(EndpointBase):
         #    example, returning an HTML page that includes a 'continue' button
         #    with an action linked to the redirection URI.
         if not client.hash_sign_supported:
-            data_dict = {'action_uri': self.build_redirect_url(redirect_uri, output_params, params_as_uri_fragment)}
-            return render(self.request, TEMPLATE_AUTHORIZE_PROCEED, data_dict)
+            return render(
+                self.request,
+                TEMPLATE_AUTHORIZE_PROCEED,
+                {'action_uri': self.build_redirect_url(redirect_uri, output_params, params_as_uri_fragment)}
+            )
 
         return HttpResponseRedirect(self.build_redirect_url(redirect_uri, output_params, params_as_uri_fragment))
 
-    def handle_code(self, client, redirect_uri, filtered_scopes):
+    def handle_code(self, client: Client, redirect_uri: str, filtered_scopes: List[Scope]) -> dict:
         """
         SPEC:
 
@@ -809,7 +897,7 @@ class AuthorizeEndpoint(EndpointBase):
 
         return {'code': code.code}
 
-    def handle_token(self, client, redirect_uri, filtered_scopes):
+    def handle_token(self, client: Client, redirect_uri: str, filtered_scopes: List[Scope]):
         """
         SPEC:
 
@@ -824,11 +912,12 @@ class AuthorizeEndpoint(EndpointBase):
         """
         token = self.generate_token(client, self.request.user)
         token.save()
+
         self.apply_scopes(token, filtered_scopes)
 
         return self.build_token_document(token, client.token_lifetime, with_refresh_token=False)
 
-    def process_request(self):
+    def process_request(self) -> HttpResponse:
         """Main method performing client request processing.
 
         SPEC:
@@ -847,12 +936,13 @@ class AuthorizeEndpoint(EndpointBase):
             # Obtain an authorization decision by asking the resource owner.
             return self.request_auth_confirmation()
 
+        session = self.request.session
         # User has made his choice using auth form.
-        client_id = self.request.session.get('oauth_client_id')
-        response_type = self.request.session.get('oauth_response_type')
-        redirect_uri = self.request.session.get('oauth_redirect_uri')
-        scopes_ids = self.request.session.get('oauth_scopes_ids')
-        state = self.request.session.get('oauth_state')
+        client_id = session.get('oauth_client_id')
+        response_type = session.get('oauth_response_type')
+        redirect_uri = session.get('oauth_redirect_uri')
+        scopes_ids = session.get('oauth_scopes_ids')
+        state = session.get('oauth_state')
 
         params_as_uri_fragment = (response_type == 'token')
 
@@ -869,7 +959,9 @@ class AuthorizeEndpoint(EndpointBase):
         self.input_params['scope'] = Scope.objects.filter(id__in=scopes_ids).all()
         client = Client.objects.get(pk=client_id)
 
-        response = self.get_response_document(response_type, redirect_uri, client, params_as_uri_fragment, state)
+        response = self.get_response_document(
+            response_type, redirect_uri, client, params_as_uri_fragment, state)
+
         self._clear_session()
 
         return response

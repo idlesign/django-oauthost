@@ -1,5 +1,11 @@
 from django import VERSION
-from django.conf.urls import url
+
+try:
+    from django.conf.urls import re_path as url
+
+except ImportError:
+    # Deprecated in new versions
+    from django.conf.urls import url
 
 from .views import endpoint_authorize, endpoint_token
 

@@ -28,9 +28,11 @@ class Command(BaseCommand):
 
             decorated_views_count = 0
 
-            self.stdout.write('Working on "%s" application ...\n' % app_name)
+            self.stdout.write(f'Working on "{app_name}" application ...\n')
+
             try:
-                app_views = __import__('%s.views' % app_name)
+                app_views = __import__(f'{app_name}.views')
+
             except ImportError:
                 raise CommandError('No views.py found in the application.')
 
@@ -42,13 +44,17 @@ class Command(BaseCommand):
                     # That's how we find decorated views.
                     if func_name != 'oauth_required' and app_views_substr in getfile(func):
                         decorated_views_count += 1
+
                         # TODO That would be nice to have here a value of `scope` parameter of @oauth_required if it set.
                         # That is, of course, if only we can trace it up at a low cost.
                         scope_name = '%(app_name)s:%(view_name)s' % {'app_name': app_name, 'view_name': func_name}
-                        self.stdout.write('    Found "%s" view. Syncing "%s" scope ... ' % (func_name, scope_name))
+
+                        self.stdout.write(f'    Found "{func_name}" view. Syncing "{scope_name}" scope ... ')
+
                         # A try to give our scope a pretty name.
                         scope_title = '%s %s' % (app_name.capitalize(), ' '.join([word.capitalize() for word in func_name.split('_')]))
                         scope = Scope(identifier=scope_name, title=scope_title)
+
                         try:
                             scope.save()
                         except IntegrityError:

@@ -3,24 +3,24 @@ from datetime import datetime
 from django.contrib.auth import login
 from django.core.exceptions import ObjectDoesNotExist
 from django.template import loader, RequestContext
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpRequest
 from django.utils.translation import ugettext_lazy as _
 
 
-class BearerAuthHandler(object):
+class BearerAuthHandler:
     """Handles Bearer token authentication calls.
 
     SPEC: http://tools.ietf.org/html/rfc6750
 
     """
 
-    _token = None
-    _request = None
-    _response = None
-    _error = None
-    _scope = None
+    _token: str = None
+    _request: HttpRequest = None
+    _response: HttpResponse = None
+    _error: str = None
+    _scope: str = None
 
-    def __init__(self, request, scope):
+    def __init__(self, request: HttpRequest, scope):
         self._request = request
         self._scope = scope
 
@@ -48,7 +48,7 @@ class BearerAuthHandler(object):
         else:
             self._token = token
 
-    def validate_token(self):
+    def validate_token(self) -> bool:
 
         if self._token is None:
             return False
@@ -100,15 +100,17 @@ class BearerAuthHandler(object):
             additional_params = {
                 'error': self._error, 'error_description': current_error[1]
             }
-            additional_params = ',' . join(['%s="%s"' % (i[0], i[1]) for i in additional_params.items()])
+            additional_params = ','.join([f'{key}="{val}"' for key, val in additional_params.items()])
+
             context = RequestContext(self._request)
+
             self._response = HttpResponse(
                 content=loader.render_to_string(
                     TEMPLATE_RESTRICTED, {'oauthost_title': _('Access Restricted')}, context
                 ),
                 status=current_error[0]
             )
-            self._response['WWW-Authenticate'] = 'Bearer %s' % additional_params
+            self._response['WWW-Authenticate'] = f'Bearer {additional_params}'
 
-    def response(self):
+    def response(self) -> HttpResponse:
         return self._response

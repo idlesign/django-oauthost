@@ -5,6 +5,7 @@ from .auth_handlers import BearerAuthHandler
 
 # Someday here might be something more than bare Bearer.
 TOKEN_TYPE_BEARER = 'bearer'
+
 REGISTRY_TOKEN_TYPE = {
     (TOKEN_TYPE_BEARER, 'Bearer', BearerAuthHandler),
 }
