@@ -398,8 +398,15 @@ class TestGrants:
             Authorization='Basic Tqrqwer==')
 
         assert resp.status_code == 401
-        assert 'www-authenticate' in resp._headers
-        assert resp._headers['www-authenticate'][1] == 'Basic'
+
+        headers = getattr(resp, 'headers', None)
+        if headers is None:
+            # pre Django 3.2
+            header_auth = resp._headers['www-authenticate'][1]
+        else:
+            header_auth = headers['www-authenticate']
+
+        assert header_auth == 'Basic'
 
         # Valid token by code request.
         # HTTP Basic data - OClient:cl012345 --> T0NsaWVudDpjbDAxMjM0NQ==
