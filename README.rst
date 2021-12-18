@@ -11,9 +11,6 @@ http://github.com/idlesign/django-oauthost
 .. image:: https://img.shields.io/coveralls/idlesign/django-oauthost/master.svg
     :target: https://coveralls.io/r/idlesign/django-oauthost
 
-.. image:: https://img.shields.io/travis/idlesign/django-oauthost/master.svg
-    :target: https://travis-ci.org/idlesign/django-oauthost
-
 
 What's that
 -----------
