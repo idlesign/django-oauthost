@@ -4,7 +4,7 @@ from django.contrib.auth import login
 from django.core.exceptions import ObjectDoesNotExist
 from django.template import loader, RequestContext
 from django.http import HttpResponse, HttpRequest
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 
 class BearerAuthHandler:

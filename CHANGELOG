@@ -4,6 +4,7 @@ django-oauthost changelog
 
 Unreleased
 ----------
+* Django 4.0 compatibility improved.
 * Drop support for Python 3.5.
 
 
