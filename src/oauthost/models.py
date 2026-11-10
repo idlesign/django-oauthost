@@ -187,7 +187,7 @@ class Client(models.Model):
                 self.identifier = self.generate_indentifier()
 
                 try:
-                    super(Client, self).save(force_insert, force_update, **kwargs)
+                    super().save(force_insert=force_insert, force_update=force_update, **kwargs)
 
                 except IntegrityError:
                     pass
@@ -195,7 +195,7 @@ class Client(models.Model):
                 else:
                     break
         else:
-            super(Client, self).save(force_insert, force_update, **kwargs)
+            super().save(force_insert=force_insert, force_update=force_update, **kwargs)
 
 
 class RedirectionEndpoint(models.Model):
@@ -292,13 +292,13 @@ class AuthorizationCode(models.Model):
             while True:
                 self.code = self.generate_code()
                 try:
-                    super(AuthorizationCode, self).save(force_insert, force_update, **kwargs)
+                    super().save(force_insert=force_insert, force_update=force_update, **kwargs)
                 except IntegrityError:
                     pass
                 else:
                     break
         else:
-            super(AuthorizationCode, self).save(force_insert, force_update, **kwargs)
+            super().save(force_insert=force_insert, force_update=force_update, **kwargs)
 
 
 class Token(models.Model):
@@ -363,10 +363,10 @@ class Token(models.Model):
                 self.refresh_token = self.generate_token()
 
                 try:
-                    super(Token, self).save(force_insert, force_update, **kwargs)
+                    super().save(force_insert=force_insert, force_update=force_update, **kwargs)
                 except IntegrityError:
                     pass
                 else:
                     break
         else:
-            super(Token, self).save(force_insert, force_update, **kwargs)
+            super().save(force_insert=force_insert, force_update=force_update, **kwargs)

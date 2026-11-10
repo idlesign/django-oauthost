@@ -96,7 +96,7 @@ def register_client(
     return cl
 
 
-def auth_handler_response(request: HttpRequest, scope: str = None) -> Optional[HttpResponse]:
+def auth_handler_response(request: HttpRequest, scope: str = None) -> HttpResponse | None:
     """Checks for token data in request using various
     methods depending on token types defined in REGISTRY_TOKEN_TYPE.
 

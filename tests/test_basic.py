@@ -16,7 +16,7 @@ URL_AUTHORIZE = '/auth/'
 class OAuthostClient(DjangoClient):
 
     def post(self, path, data=None, **extra):
-        response = super(OAuthostClient, self).post(path, data=data, **extra)
+        response = super().post(path, data=data, **extra)
         if path == URL_TOKEN:
             response.content_json = json.loads(response.content.decode('utf-8'))
         return response

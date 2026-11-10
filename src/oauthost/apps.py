@@ -7,3 +7,4 @@ class OauthostConfig(AppConfig):
 
     name = 'oauthost'
     verbose_name = _('OAuthost')
+    default_auto_field = 'django.db.models.AutoField'

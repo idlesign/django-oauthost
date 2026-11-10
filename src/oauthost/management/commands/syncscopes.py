@@ -1,4 +1,4 @@
-from os import path
+from pathlib import Path
 from inspect import getfile
 
 from django.core.management.base import BaseCommand, CommandError
@@ -18,7 +18,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
 
-        if not len(args):
+        if not args:
             raise CommandError('This command accepts space delimited list of application names.')
 
         if not set(args).issubset(settings.INSTALLED_APPS):
@@ -36,7 +36,7 @@ class Command(BaseCommand):
             except ImportError:
                 raise CommandError('No views.py found in the application.')
 
-            app_views_substr = path.join('oauthost', 'decorators.py')
+            app_views_substr = str(Path('oauthost') / 'decorators.py')
 
             for func_name in dir(app_views.views):
                 if '__' not in func_name:
@@ -45,14 +45,15 @@ class Command(BaseCommand):
                     if func_name != 'oauth_required' and app_views_substr in getfile(func):
                         decorated_views_count += 1
 
-                        # TODO That would be nice to have here a value of `scope` parameter of @oauth_required if it set.
-                        # That is, of course, if only we can trace it up at a low cost.
+                        # TODO That would be nice to have here a value of `scope` parameter of @oauth_required
+                        #  if it set. That is, of course, if only we can trace it up at a low cost.
                         scope_name = '%(app_name)s:%(view_name)s' % {'app_name': app_name, 'view_name': func_name}
 
                         self.stdout.write(f'    Found "{func_name}" view. Syncing "{scope_name}" scope ... ')
 
                         # A try to give our scope a pretty name.
-                        scope_title = '%s %s' % (app_name.capitalize(), ' '.join([word.capitalize() for word in func_name.split('_')]))
+                        words = (word.capitalize() for word in func_name.split('_'))
+                        scope_title = '%s %s' % (app_name.capitalize(), ' '.join(words))
                         scope = Scope(identifier=scope_name, title=scope_title)
 
                         try:

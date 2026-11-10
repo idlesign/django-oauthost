@@ -1,10 +1,7 @@
-djang-oauthost Authors
-======================
+# django-oauthost authors
 
-Created by Igor 'idle sign' Starikov.
+Created by Igor `idle sign` Starikov.
 
+## Contributors
 
-Contributors
-------------
-
-CJ <https://github.com/imcj>
+* CJ <https://github.com/imcj>

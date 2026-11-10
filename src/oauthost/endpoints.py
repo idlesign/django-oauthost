@@ -111,10 +111,7 @@ class EndpointBase:
         SPEC: Parameters sent without a value MUST be treated as if they were omitted from the request.
 
         """
-        params_filtered = {}
-        for key, value in input_params.items():
-            if value:
-                params_filtered[key] = value
+        params_filtered = {key: value for key, value in input_params.items() if value}
         return params_filtered
 
     def filter_scopes(self, client: Client) -> List[Scope]:
@@ -147,13 +144,11 @@ class EndpointBase:
         else:
             scopes_requested = []
 
-        client_scopes = []
         scopes_filtered = []
         scopes_available = []
 
         # Scopes associated with the client.
-        for scope in client.scopes.filter(status=Scope.STATUS_ENABLED).all():
-            client_scopes.append(scope)
+        client_scopes = list(client.scopes.filter(status=Scope.STATUS_ENABLED).all())
 
         # No scopes requested, and client is unrestricted by scopes.
         # Prevent accessing all scopes.
@@ -182,8 +177,10 @@ class EndpointBase:
         if unsupported:
             raise ScopeException(f"Unsupported scope requested: {' '.join(unsupported)}.")
 
-        for scope_name in set(scopes_requested).intersection(scopes_available_set):
-            scopes_filtered.append(scopes_available[scope_name])
+        scopes_filtered = [
+            scopes_available[scope_name]
+            for scope_name in set(scopes_requested).intersection(scopes_available_set)
+        ]
 
         return scopes_filtered
 
@@ -255,11 +252,11 @@ class EndpointBase:
 
     def get_client(self) -> Client:
         """Returns client object."""
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def process_request(self) -> HttpResponse:
         """Main method performing client request processing."""
-        raise NotImplementedError()
+        raise NotImplementedError
 
 
 class TokenEndpoint(EndpointBase):

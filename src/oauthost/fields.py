@@ -13,7 +13,7 @@ if 'south' in settings.INSTALLED_APPS:
 class URLShemeFormField(forms.URLField):
 
     def __init__(self, *args, **kwargs):
-        super(URLShemeFormField, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         del self.validators[-1]
 
 
@@ -26,4 +26,4 @@ class URLSchemeField(models.URLField):
     def formfield(self, **kwargs):
         defaults = {'form_class': URLShemeFormField}
         defaults.update(kwargs)
-        return super(URLSchemeField, self).formfield(**defaults)
+        return super().formfield(**defaults)
