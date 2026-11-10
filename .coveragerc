@@ -1,3 +1,0 @@
-[run]
-include = oauthost/*
-omit = oauthost/migrations/*, oauthost/tests/*, oauthost/config.py, oauthost/admin.py
