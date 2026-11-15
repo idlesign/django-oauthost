@@ -1,5 +1,5 @@
 from uuid import uuid4
-from random import randrange
+from secrets import token_urlsafe
 
 from django.conf import settings
 from django.db import models, IntegrityError
@@ -249,12 +249,13 @@ class RedirectionEndpoint(models.Model):
 
 class AuthorizationCode(models.Model):
 
-    # A maximum authorization code lifetime of 10 minutes is RECOMMENDED
+    # A maximum authorization code lifetime of 10 minutes is RECOMMENDED.
+    # Enforced by OAUTHOST_CODE_LIFETIME setting.
     date_issued = models.DateTimeField(
         _('Issued at'), auto_now_add=True)
 
     code = models.CharField(
-        _('Code'), max_length=7, unique=True, blank=True,
+        _('Code'), max_length=64, unique=True, blank=True,
         help_text=_('Code issued upon authorization.'))
 
     user = models.ForeignKey(
@@ -283,9 +284,9 @@ class AuthorizationCode(models.Model):
         return f'{self.code}'
 
     @classmethod
-    def generate_code(cls) -> int:
-        """Code length: 7 chars."""
-        return randrange(1000000, 9999999)
+    def generate_code(cls) -> str:
+        """Returns a cryptographically random code. Length: 43 chars."""
+        return token_urlsafe(32)
 
     def save(self, force_insert=False, force_update=False, **kwargs):
         if not self.code:

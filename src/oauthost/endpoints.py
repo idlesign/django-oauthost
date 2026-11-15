@@ -1,6 +1,7 @@
 import json
 from base64 import b64decode
 from datetime import datetime
+from secrets import compare_digest
 from time import time
 from typing import List, Union
 
@@ -10,11 +11,12 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse, HttpResponseRedirect, HttpRequest
 from django.shortcuts import render
+from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 
 from .exceptions import EndpointError, OauthostException
 from .models import Client, AuthorizationCode, Token, Scope
-from .settings import TEMPLATE_AUTHORIZE, TEMPLATE_AUTHORIZE_ERROR, TEMPLATE_AUTHORIZE_PROCEED
+from .settings import CODE_LIFETIME, TEMPLATE_AUTHORIZE, TEMPLATE_AUTHORIZE_ERROR, TEMPLATE_AUTHORIZE_PROCEED
 from .utils import get_remote_ip, LOGGER
 
 User = get_user_model()
@@ -417,8 +419,8 @@ class TokenEndpoint(EndpointBase):
             #    different "client_id".  This protects the client from substitution of
             #    the authentication code.  (It provides no additional security for the
             #    protected resource.)
-            if client is not None:
-                if client.password.strip() != '' and client.password != client_password:
+            if client is not None and client.password.strip() != '':
+                if client_password is None or not compare_digest(client.password, client_password):
                     client = None
 
         if client is None:
@@ -468,6 +470,14 @@ class TokenEndpoint(EndpointBase):
         except ObjectDoesNotExist:
             raise ErrorTokenEndpointRedirect(
                 self.ERROR_INVALID_GRANT, 'Invalid authorization code is supplied.')
+
+        # SPEC: The authorization code MUST expire shortly after it is issued.
+        # A maximum code lifetime of 10 minutes is RECOMMENDED.
+        if (now() - code.date_issued).total_seconds() > CODE_LIFETIME:
+            code.delete()
+
+            raise ErrorTokenEndpointRedirect(
+                self.ERROR_INVALID_GRANT, 'Authorization code has expired.')
 
         # SPEC:
         #

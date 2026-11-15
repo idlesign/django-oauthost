@@ -10,6 +10,9 @@ REGISTRY_TOKEN_TYPE = {
     (TOKEN_TYPE_BEARER, 'Bearer', BearerAuthHandler),
 }
 
+CODE_LIFETIME = getattr(settings, 'OAUTHOST_CODE_LIFETIME', 600)
+"""Authorization code time to live in seconds. 10 minutes per RFC 6749 recommendation."""
+
 TEMPLATE_AUTHORIZE = getattr(settings, 'OAUTHOST_TEMPLATE_AUTHORIZE', 'oauthost/authorize.html')
 TEMPLATE_AUTHORIZE_ERROR = getattr(settings, 'OAUTHOST_TEMPLATE_AUTHORIZE_ERROR', 'oauthost/authorize_error.html')
 TEMPLATE_AUTHORIZE_PROCEED = getattr(settings, 'OAUTHOST_TEMPLATE_AUTHORIZE_PROCEED', 'oauthost/authorize_proceed.html')

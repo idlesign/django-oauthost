@@ -1,8 +1,10 @@
 import json
+from datetime import timedelta
 
 import pytest
 
 from django.test.client import Client as DjangoClient
+from django.utils.timezone import now
 
 from oauthost.models import AuthorizationCode, Token, Client, RedirectionEndpoint, Scope
 from oauthost.toolbox import register_client
@@ -180,6 +182,35 @@ class TestEndpointToken:
 
         assert resp.status_code == 400
         assert resp.content_json['error'] == 'invalid_grant'
+
+    def test_grant_authorization_code_expired(self, settings, client, user):
+
+        settings.DEBUG = True
+
+        client_1 = Client(user=user, title='OClient')
+        client_1.save()
+
+        redirect_1 = RedirectionEndpoint(client=client_1, uri='http://redirect-test.com')
+        redirect_1.save()
+
+        code_1 = AuthorizationCode(user=user, client=client_1, uri=redirect_1.uri)
+        code_1.save()
+
+        Scope(identifier='scope1').save()
+
+        AuthorizationCode.objects.filter(pk=code_1.pk).update(
+            date_issued=now() - timedelta(seconds=601))
+
+        # Expired code is rejected and deleted.
+        resp = client.post(
+            URL_TOKEN,
+            {'grant_type': 'authorization_code', 'scope': 'scope1', 'code': code_1.code,
+             'redirect_uri': redirect_1.uri, 'client_id': client_1.identifier,
+             'client_secret': client_1.password})
+
+        assert resp.status_code == 400
+        assert resp.content_json['error'] == 'invalid_grant'
+        assert not AuthorizationCode.objects.filter(pk=code_1.pk).exists()
 
 
 class TestEndpointAuthorize:
