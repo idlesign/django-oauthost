@@ -20,6 +20,7 @@
 * ** Fixed URLSchemeField rejecting custom URI schemes on modern Django.
 * ** Integration docs moved into docs/020_integrations/ subdirectory.
 * ** Integration docs moved into docs/020_integrations/ subdirectory.
+* ** README and scenarios docs now list available usage scenarios and mention django-sitegate as a complement for social login.
 * ** README now mentions Django REST framework support.
 
 ### v1.2.0 [2026-11-15]

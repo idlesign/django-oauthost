@@ -119,4 +119,7 @@ sequenceDiagram
 ## What does not fit
 
 * **Social login for your users** ("Sign in with Google") — oauthost
-  is a server, not a client. Look at client-side libraries instead.
+  is a server, not a client. Look at client-side tools instead —
+  e.g. [django-sitegate](https://github.com/idlesign/django-sitegate),
+  which complements oauthost nicely: users signed in through it can
+  authorize OAuth clients at your authorization endpoint.
