@@ -41,3 +41,20 @@ class MyView(APIView):
 ```
 
 Requests with a token lacking the required scopes are answered with `403`.
+
+## OpenAPI (drf-spectacular)
+
+When `drf_spectacular` is listed in `INSTALLED_APPS`, oauthost automatically
+registers the `Bearer` security scheme, so views using
+`OAuthostAuthentication` are properly described in generated OpenAPI schemas
+and work with the Authorize button in Swagger UI.
+
+!!! note
+
+    If you use drf-spectacular without adding it to `INSTALLED_APPS`,
+    register the scheme manually by importing the extension module
+    before schema generation:
+
+    ```python
+    import oauthost.integration.drf_spectacular  # noqa: F401
+    ```

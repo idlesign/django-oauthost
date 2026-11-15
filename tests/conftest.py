@@ -8,11 +8,13 @@ from pytest_djangoapp import configure_djangoapp_plugin
 pytest_plugins = configure_djangoapp_plugin(
     {
         'ROOT_URLCONF': 'oauthost.urls',
+        'REST_FRAMEWORK': {'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema'},
     },
     admin_contrib=True,
     extend_INSTALLED_APPS=[
         'django.contrib.sessions',
         'rest_framework',
+        'drf_spectacular',
     ],
     extend_MIDDLEWARE=[
         'django.middleware.common.CommonMiddleware',

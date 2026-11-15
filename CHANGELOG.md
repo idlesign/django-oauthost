@@ -3,6 +3,8 @@
 ### Unreleased
 * !! Removed Piston integration (PistonAuthHelper) since the Piston framework is long dead.
 * ++ Added Django REST framework integration: OAuthostAuthentication and HasScope in oauthost.integration.drf.
+* ++ Added drf-spectacular (OpenAPI) support for DRF integration.
+* ++ Added drf-spectacular (OpenAPI) support for DRF integration.
 * ++ Added Usage scenarios documentation page with diagrams.
 * ++ Test coverage raised from 75% to 93%.
 * ** Abstract method stubs are now excluded from coverage report.
@@ -14,6 +16,8 @@
 * ** Fixed oauth_required decorator broken by available_attrs import removed in modern Django.
 * ** Fixed syncscopes command unable to accept arguments on modern Django.
 * ** Fixed URLSchemeField rejecting custom URI schemes on modern Django.
+* ** Integration docs moved into docs/020_integrations/ subdirectory.
+* ** Integration docs moved into docs/020_integrations/ subdirectory.
 
 ### v1.2.0 [2026-11-15]
 * !! Authorization codes are now cryptographically random 43-char strings instead of 7-digit numbers (kudos Sanjeev Kumar).
