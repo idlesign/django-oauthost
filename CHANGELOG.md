@@ -1,6 +1,6 @@
 # django-oauthost changelog
 
-### Unreleased
+### v1.3.0 [2026-11-15]
 * !! Removed Piston integration (PistonAuthHelper) since the Piston framework is long dead.
 * ++ Added Django REST framework integration: OAuthostAuthentication and HasScope in oauthost.integration.drf.
 * ++ Added drf-spectacular (OpenAPI) support for DRF integration.
