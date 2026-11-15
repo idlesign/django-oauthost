@@ -1,5 +1,12 @@
 # django-oauthost changelog
 
+### Unreleased
+* ++ Test coverage raised from 75% to 93%.
+* ** Dropped dead compatibility code for South and Django below 2.0.
+* ** Fixed oauth_required decorator broken by available_attrs import removed in modern Django.
+* ** Fixed syncscopes command unable to accept arguments on modern Django.
+* ** Fixed URLSchemeField rejecting custom URI schemes on modern Django.
+
 ### v1.2.0 [2026-11-15]
 * !! Authorization codes are now cryptographically random 43-char strings instead of 7-digit numbers (kudos Sanjeev Kumar).
 * ++ Authorization codes now expire after OAUTHOST_CODE_LIFETIME seconds, 10 minutes by default (kudos Sanjeev Kumar).

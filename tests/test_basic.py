@@ -6,7 +6,7 @@ import pytest
 from django.test.client import Client as DjangoClient
 from django.utils.timezone import now
 
-from oauthost.models import AuthorizationCode, Token, Client, RedirectionEndpoint, Scope
+from oauthost.models import AuthorizationCode, Token, Client, Scope
 from oauthost.toolbox import register_client
 from oauthost.exceptions import OauthostException
 
@@ -40,6 +40,16 @@ def parse_location_header(response, use_uri_fragment=False):
 @pytest.fixture
 def client():
     return OAuthostClient()
+
+
+@pytest.fixture
+def login(client, user):
+    """Logs the user in using the test client."""
+
+    def login_():
+        return client.login(username=user.username, password='password')
+
+    return login_
 
 
 class TestToolbox:
@@ -85,7 +95,7 @@ class TestToolbox:
 
 class TestEndpointToken:
 
-    def test_grant_authorization_code(self, settings, client, user):
+    def test_grant_authorization_code(self, settings, client, client_oauth, redirect_endpoint, auth_code, scope_1):
 
         # Secure connection check
         with settings(DEBUG=False):
@@ -98,16 +108,9 @@ class TestEndpointToken:
         assert resp.status_code == 400
         assert resp.content_json['error'] == 'unsupported_grant_type'
 
-        client_1 = Client(user=user, title='OClient')
-        client_1.save()
-
-        redirect_1 = RedirectionEndpoint(client=client_1, uri='http://redirect-test.com')
-        redirect_1.save()
-
-        code_1 = AuthorizationCode(user=user, client=client_1, uri=redirect_1.uri)
-        code_1.save()
-
-        Scope(identifier='scope1').save()
+        client_1 = client_oauth()
+        redirect_1 = redirect_endpoint(client_1)
+        code_1 = auth_code(client_1, redirect_1.uri)
 
         # Missing client authentication data.
         resp = client.post(URL_TOKEN, {'grant_type': 'authorization_code', 'scope': 'scope1'})
@@ -116,19 +119,19 @@ class TestEndpointToken:
 
         # Missing all required params.
         resp = client.post(
-            URL_TOKEN, 
-            {'grant_type': 'authorization_code', 'scope': 'scope1', 
+            URL_TOKEN,
+            {'grant_type': 'authorization_code', 'scope': 'scope1',
              'client_id': client_1.identifier, 'client_secret': client_1.password})
-        
+
         assert resp.status_code == 400
         assert resp.content_json['error'] == 'invalid_request'
 
         # Missing redirect URI.
         resp = client.post(
-            URL_TOKEN, 
+            URL_TOKEN,
             {'grant_type': 'authorization_code', 'scope': 'scope1', 'code': 'wrong_code',
              'client_id': client_1.identifier, 'client_secret': client_1.password})
-        
+
         assert resp.status_code == 400
         assert resp.content_json['error'] == 'invalid_request'
 
@@ -183,20 +186,13 @@ class TestEndpointToken:
         assert resp.status_code == 400
         assert resp.content_json['error'] == 'invalid_grant'
 
-    def test_grant_authorization_code_expired(self, settings, client, user):
+    def test_grant_authorization_code_expired(self, settings, client, client_oauth, redirect_endpoint, auth_code, scope_1):
 
         settings.DEBUG = True
 
-        client_1 = Client(user=user, title='OClient')
-        client_1.save()
-
-        redirect_1 = RedirectionEndpoint(client=client_1, uri='http://redirect-test.com')
-        redirect_1.save()
-
-        code_1 = AuthorizationCode(user=user, client=client_1, uri=redirect_1.uri)
-        code_1.save()
-
-        Scope(identifier='scope1').save()
+        client_1 = client_oauth()
+        redirect_1 = redirect_endpoint(client_1)
+        code_1 = auth_code(client_1, redirect_1.uri)
 
         AuthorizationCode.objects.filter(pk=code_1.pk).update(
             date_issued=now() - timedelta(seconds=601))
@@ -212,13 +208,77 @@ class TestEndpointToken:
         assert resp.content_json['error'] == 'invalid_grant'
         assert not AuthorizationCode.objects.filter(pk=code_1.pk).exists()
 
+    def test_grant_authorization_code_replay(self, settings, client, client_oauth, redirect_endpoint, auth_code, scope_1):
+
+        settings.DEBUG = True
+
+        client_1 = client_oauth()
+        redirect_1 = redirect_endpoint(client_1)
+        code_1 = auth_code(client_1, redirect_1.uri)
+
+        params = {
+            'grant_type': 'authorization_code', 'scope': 'scope1', 'code': code_1.code,
+            'redirect_uri': redirect_1.uri, 'client_id': client_1.identifier,
+            'client_secret': client_1.password}
+
+        resp = client.post(URL_TOKEN, params)
+        assert resp.status_code == 200
+        assert Token.objects.filter(code=code_1).count() == 1
+
+        # Code reuse is denied; already issued tokens and the code are revoked.
+        resp = client.post(URL_TOKEN, params)
+        assert resp.status_code == 400
+        assert resp.content_json['error'] == 'invalid_grant'
+        assert Token.objects.filter(code=code_1).count() == 0
+        assert not AuthorizationCode.objects.filter(pk=code_1.pk).exists()
+
+    def test_grant_authorization_code_another_client(self, settings, client, client_oauth, redirect_endpoint, auth_code, scope_1):
+
+        settings.DEBUG = True
+
+        client_1 = client_oauth(identifier='cl1', password='pass1')
+        client_2 = client_oauth(identifier='cl2', password='pass2')
+
+        redirect_1 = redirect_endpoint(client_1)
+        code_1 = auth_code(client_1, redirect_1.uri)
+
+        # The code was issued to another client.
+        resp = client.post(
+            URL_TOKEN,
+            {'grant_type': 'authorization_code', 'scope': 'scope1', 'code': code_1.code,
+             'redirect_uri': redirect_1.uri, 'client_id': client_2.identifier, 'client_secret': 'pass2'})
+
+        assert resp.status_code == 400
+        assert resp.content_json['error'] == 'invalid_grant'
+
+    def test_client_authentication(self, settings, client, user, client_oauth, scope_1):
+
+        settings.DEBUG = True
+
+        client_1 = client_oauth(identifier='OClient', password='cl012345')
+
+        # Unknown client identifier.
+        resp = client.post(
+            URL_TOKEN,
+            {'grant_type': 'password', 'scope': 'scope1', 'username': user.username,
+             'password': 'password', 'client_id': 'unknown'})
+
+        assert resp.status_code == 401
+        assert resp.content_json['error'] == 'invalid_client'
+
+        # Client secret is required but not supplied.
+        resp = client.post(
+            URL_TOKEN,
+            {'grant_type': 'password', 'scope': 'scope1', 'username': user.username,
+             'password': 'password', 'client_id': client_1.identifier})
+
+        assert resp.status_code == 401
+        assert resp.content_json['error'] == 'invalid_client'
+
 
 class TestEndpointAuthorize:
 
-    def test_auth(self, settings, client, user):
-
-        def login():
-            return client.login(username=user.username, password='password')
+    def test_auth(self, settings, client, login, client_oauth, redirect_endpoint, scope_1):
 
         # User is not logged in, redirect to login page
         resp = client.get(URL_AUTHORIZE, {'client_id': '100'})
@@ -233,22 +293,12 @@ class TestEndpointAuthorize:
 
         settings.DEBUG = True
 
-        client_1 = Client(user=user, title='OClient', identifier='cl012345')
-        client_1.save()
+        client_1 = client_oauth(identifier='cl012345')
+        client_2 = client_oauth()
 
-        client_2 = Client(user=user, title='OGOClient')
-        client_2.save()
-
-        redirect_1 = RedirectionEndpoint(client=client_1, uri='http://redirect-test.com')
-        redirect_1.save()
-
-        redirect_2 = RedirectionEndpoint(client=client_2, uri='http://redirect-test1.com')
-        redirect_2.save()
-
-        redirect_3 = RedirectionEndpoint(client=client_2, uri='http://redirect-test2.com')
-        redirect_3.save()
-
-        Scope(identifier='scope1').save()
+        redirect_1 = redirect_endpoint(client_1)
+        redirect_endpoint(client_2, 'http://redirect-test1.com')
+        redirect_endpoint(client_2, 'http://redirect-test2.com')
 
         # Missing client id.
         login()
@@ -339,23 +389,63 @@ class TestEndpointAuthorize:
         assert 'token_type' in params
         assert params['state'] == 'some_state_three'
 
+    def test_auth_errors(self, settings, client, login, client_oauth, redirect_endpoint, scope_1):
+
+        settings.DEBUG = True
+
+        client_1 = client_oauth()
+        redirect_endpoint(client_1)
+
+        login()
+
+        # Invalid client id, request behind a proxy.
+        resp = client.get(
+            URL_AUTHORIZE,
+            {'response_type': 'code', 'scope': 'scope1', 'client_id': 'invalid'},
+            HTTP_X_FORWARDED_FOR='10.1.2.3')
+
+        assert resp.status_code == 400
+
+        # Unsupported scope requested.
+        resp = client.get(
+            URL_AUTHORIZE,
+            {'response_type': 'code', 'scope': 'unknown', 'state': 'abc', 'client_id': client_1.identifier})
+
+        assert resp.status_code == 302
+        assert parse_location_header(resp)['error'] == 'invalid_scope'
+        assert parse_location_header(resp)['state'] == 'abc'
+
+    def test_auth_proceed_page(self, settings, client, login, client_oauth, redirect_endpoint, scope_1):
+
+        settings.DEBUG = True
+
+        # Client without support of fragment component in Location header.
+        client_1 = client_oauth(hash_sign_supported=False)
+        redirect_endpoint(client_1)
+
+        login()
+
+        resp = client.get(
+            URL_AUTHORIZE,
+            {'response_type': 'code', 'scope': 'scope1', 'client_id': client_1.identifier})
+
+        assert resp.status_code == 200
+
+        # A continue page is rendered instead of a redirect.
+        resp = client.post(URL_AUTHORIZE, {'auth_decision': 'is_made', 'confirmed': 'yes'})
+
+        assert resp.status_code == 200
+        assert b'code=' in resp.content
+
 
 class TestGrants:
 
-    def test_authorization_code_unsafe(self, settings, client, user):
-
-        def login():
-            return client.login(username=user.username, password='password')
+    def test_authorization_code_unsafe(self, settings, client, login, client_oauth, redirect_endpoint, scope_1):
 
         settings.DEBUG = True  # Bypass https requirement
 
-        client_1 = Client(user=user, title='OClient')
-        client_1.save()
-
-        redirect_1 = RedirectionEndpoint(client=client_1, uri='http://redirect-test.com')
-        redirect_1.save()
-
-        Scope(identifier='scope1').save()
+        client_1 = client_oauth()
+        redirect_1 = redirect_endpoint(client_1)
 
         # Logging the user in.
         assert login()
@@ -388,23 +478,15 @@ class TestGrants:
         assert 'refresh_token' in resp.content_json
         assert 'token_type' in resp.content_json
 
-    def test_authorization_code_http_basic(self, settings, client, user):
-
-        def login():
-            return client.login(username=user.username, password='password')
+    def test_authorization_code_http_basic(self, settings, client, login, client_oauth, redirect_endpoint, scope_1):
 
         settings.DEBUG = True  # Bypass https requirement
 
-        client_1 = Client(user=user, title='OClient', identifier='OClient', password='cl012345')
-        client_1.save()
-
-        redirect_1 = RedirectionEndpoint(client=client_1, uri='http://redirect-test.com')
-        redirect_1.save()
+        client_1 = client_oauth(identifier='OClient', password='cl012345')
+        redirect_1 = redirect_endpoint(client_1)
 
         # Logging the user in.
         login()
-
-        Scope(identifier='scope1').save()
 
         # Valid code request.
         resp = client.get(
@@ -451,15 +533,14 @@ class TestGrants:
         assert 'refresh_token' in resp.content_json
         assert 'token_type' in resp.content_json
 
-    def test_scope(self, settings, client, user):
+    def test_scope(self, settings, client, user, client_oauth):
 
         settings.DEBUG = True
-        
+
         username = user.username
         password = 'password'
 
-        client_1 = Client(user=user, title='OClient1', identifier='OClient', password='cl012345')
-        client_1.save()
+        client_1 = client_oauth(identifier='OClient', password='cl012345')
 
         # Scope is missing.
         resp = client.post(
@@ -484,8 +565,7 @@ class TestGrants:
         scope3 = Scope(identifier='scope3', status=Scope.STATUS_DISABLED)
         scope3.save()
 
-        client_2 = Client(user=user, title='OClien2', identifier='OClient2', password='cl012345')
-        client_2.save()
+        client_2 = client_oauth(title='OClien2', identifier='OClient2', password='cl012345')
         client_2.scopes.add(scope2)
 
         # Unsupported (or disabled) client scope request.
@@ -515,17 +595,12 @@ class TestGrants:
         assert 'token_type' in resp.content_json
         assert resp.content_json['scope'] == 'scope1'
 
-    def test_token_by_user_credentials(self, settings, client, user):
+    def test_token_by_user_credentials(self, settings, client, user, client_oauth, redirect_endpoint, scope_1):
 
         settings.DEBUG = True
 
-        client_1 = Client(user=user, title='OClient', identifier='OClient', password='cl012345', token_lifetime=15)
-        client_1.save()
-
-        redirect_1 = RedirectionEndpoint(client=client_1, uri='http://redirect-test.com')
-        redirect_1.save()
-
-        Scope(identifier='scope1').save()
+        client_1 = client_oauth(identifier='OClient', password='cl012345', token_lifetime=15)
+        redirect_endpoint(client_1)
 
         # Missing params.
         resp = client.post(
@@ -555,17 +630,12 @@ class TestGrants:
         assert 'token_type' in resp.content_json
         assert 'expires_in' in resp.content_json
 
-    def test_token_by_client_credentials(self, settings, client, user):
+    def test_token_by_client_credentials(self, settings, client, user, client_oauth, redirect_endpoint, scope_1):
 
         settings.DEBUG = True
 
-        client_1 = Client(user=user, title='OClient', identifier='OClient', password='cl012345')
-        client_1.save()
-
-        redirect_1 = RedirectionEndpoint(client=client_1, uri='http://redirect-test.com')
-        redirect_1.save()
-
-        Scope(identifier='scope1').save()
+        client_1 = client_oauth(identifier='OClient', password='cl012345')
+        redirect_endpoint(client_1)
 
         # Valid token by client credentials request.
         resp = client.post(
@@ -581,18 +651,28 @@ class TestGrants:
         token = Token.objects.get(access_token=access_token)
         assert user == token.user
 
-    def test_refresh_token_http_basic(self, settings, client, user):
+    def test_token_by_client_credentials_public(self, settings, client, client_oauth, scope_1):
 
         settings.DEBUG = True
 
-        client_1 = Client(user=user, title='OClient', identifier='OClient', password='cl012345')
-        client_1.save()
+        # Public clients must not use client credentials grant.
+        client_1 = client_oauth(type=Client.TYPE_PUBLIC)
 
-        client_2 = Client(user=user, title='OGOClient', identifier='OGOClient', password='cl543210')
-        client_2.save()
+        resp = client.post(
+            URL_TOKEN, {'grant_type': 'client_credentials', 'scope': 'scope1',
+                        'client_id': client_1.identifier})
 
-        redirect_1 = RedirectionEndpoint(client=client_1, uri='http://redirect-test.com')
-        redirect_1.save()
+        assert resp.status_code == 400
+        assert 'not authorized' in resp.content_json['error_description']
+
+    def test_refresh_token_http_basic(self, settings, client, user, client_oauth, redirect_endpoint):
+
+        settings.DEBUG = True
+
+        client_1 = client_oauth(identifier='OClient', password='cl012345')
+        client_2 = client_oauth(identifier='OGOClient', password='cl543210')
+
+        redirect_endpoint(client_1)
 
         token_1 = Token(client=client_1, user=user)
         token_1.save()

@@ -1,7 +1,5 @@
 from functools import wraps
 
-from django.utils.decorators import available_attrs
-
 from .toolbox import auth_handler_response
 
 
@@ -17,7 +15,7 @@ def oauth_required(scope: str = None, scope_auto: bool = False):
 
     """
     def decorated_view(view_function):
-        @wraps(view_function, assigned=available_attrs(view_function))
+        @wraps(view_function)
         def wrapper(request, *args, **kwargs):
             target_scope = scope
 

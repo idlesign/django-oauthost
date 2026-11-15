@@ -10,21 +10,22 @@ from oauthost.models import Scope
 
 class Command(BaseCommand):
 
-    args = '<app_name app_name ...>'
     help = (
         'Registers OAuth2 scopes from application views in form of `<application_name>:<decorated_view_name>`.'
         'It requires views.py to reside in application directory. Use @oauth_required to decorate view '
         'which requires scope syncing.')
 
+    def add_arguments(self, parser):
+        parser.add_argument('app_names', nargs='+', metavar='app_name')
+
     def handle(self, *args, **options):
 
-        if not args:
-            raise CommandError('This command accepts space delimited list of application names.')
+        app_names = options['app_names']
 
-        if not set(args).issubset(settings.INSTALLED_APPS):
+        if not set(app_names).issubset(settings.INSTALLED_APPS):
             raise CommandError('One or more application names issued to the command are not in INSTALLED_APPS.')
 
-        for app_name in args:
+        for app_name in app_names:
 
             decorated_views_count = 0
 

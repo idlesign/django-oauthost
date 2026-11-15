@@ -1,3 +1,7 @@
+from itertools import count
+
+import pytest
+
 from pytest_djangoapp import configure_djangoapp_plugin
 
 
@@ -14,3 +18,62 @@ pytest_plugins = configure_djangoapp_plugin(
         'django.contrib.auth.middleware.AuthenticationMiddleware',
     ],
 )
+
+
+@pytest.fixture
+def client_queries(request_client, db_queries):
+    """Test client with DB queries counting available via `.db_queries`."""
+    client = request_client()
+    client.db_queries = db_queries
+    return client
+
+
+@pytest.fixture
+def client_oauth(user):
+    """Callable fixture creating OAuth clients."""
+    from oauthost.models import Client
+
+    titles = count(1)
+
+    def client_oauth_(**params) -> Client:
+        params.setdefault('title', f'OClient{next(titles)}')
+        client = Client(user=user, **params)
+        client.save()
+        return client
+
+    return client_oauth_
+
+
+@pytest.fixture
+def redirect_endpoint():
+    """Callable fixture creating redirection endpoints."""
+    from oauthost.models import RedirectionEndpoint
+
+    def redirect_endpoint_(client: 'Client', uri: str = 'http://redirect-test.com') -> RedirectionEndpoint:
+        endpoint = RedirectionEndpoint(client=client, uri=uri)
+        endpoint.save()
+        return endpoint
+
+    return redirect_endpoint_
+
+
+@pytest.fixture
+def auth_code(user):
+    """Callable fixture creating authorization codes."""
+    from oauthost.models import AuthorizationCode
+
+    def auth_code_(client: 'Client', uri: str) -> AuthorizationCode:
+        code = AuthorizationCode(user=user, client=client, uri=uri)
+        code.save()
+        return code
+
+    return auth_code_
+
+
+@pytest.fixture
+def scope_1():
+    from oauthost.models import Scope
+
+    scope = Scope(identifier='scope1')
+    scope.save()
+    return scope
