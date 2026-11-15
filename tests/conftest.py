@@ -12,6 +12,7 @@ pytest_plugins = configure_djangoapp_plugin(
     admin_contrib=True,
     extend_INSTALLED_APPS=[
         'django.contrib.sessions',
+        'rest_framework',
     ],
     extend_MIDDLEWARE=[
         'django.middleware.common.CommonMiddleware',

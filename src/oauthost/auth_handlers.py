@@ -1,8 +1,6 @@
 from django.contrib.auth import login
-from django.core.exceptions import ObjectDoesNotExist
 from django.template import loader, RequestContext
 from django.http import HttpResponse, HttpRequest
-from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 
 
@@ -53,27 +51,12 @@ class BearerAuthHandler:
             return False
 
         from oauthost.models import Token
-        try:
-            token = Token.objects.get(access_token=self._token)
-        except ObjectDoesNotExist:
-            self._error = 'invalid_token'
-            return False
 
-        # If token found is granted to all the different token type.
-        if token.access_token_type != 'bearer':
-            self._error = 'invalid_token'
-            return False
+        token, error = Token.validate_access_token(self._token, self._scope)
 
-        # Token has expired.
-        if token.expires_at is not None and token.expires_at <= now():
-            self._error = 'invalid_token'
+        if token is None:
+            self._error = error
             return False
-
-        # If target scope is defined, let's verify that the token has access to it.
-        if self._scope is not None:
-            if not token.scopes.filter(identifier=self._scope).count():
-                self._error = 'insufficient_scope'
-                return False
 
         # Token is valid and now we'll log it's owner in.
 

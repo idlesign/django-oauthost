@@ -48,6 +48,7 @@ linters = [
 ]
 tests = [
     "coverage",
+    "djangorestframework>=3.18.3",
     "pytest",
     "pytest-djangoapp>=1.6.0",
 ]

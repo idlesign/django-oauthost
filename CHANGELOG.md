@@ -2,11 +2,13 @@
 
 ### Unreleased
 * !! Removed Piston integration (PistonAuthHelper) since the Piston framework is long dead.
+* ++ Added Django REST framework integration: OAuthostAuthentication and HasScope in oauthost.integration.drf.
 * ++ Added Usage scenarios documentation page with diagrams.
 * ++ Test coverage raised from 75% to 93%.
 * ** Abstract method stubs are now excluded from coverage report.
 * ** Admin contrib enabled in tests, admin module is now covered.
 * ** Dropped dead compatibility code for South and Django below 2.0.
+* ** Extracted access token validation into Token.validate_access_token.
 * ** Extracted common save-with-regeneration logic into OauthostModel base model.
 * ** Fixed implicit grant description in quickstart.
 * ** Fixed oauth_required decorator broken by available_attrs import removed in modern Django.

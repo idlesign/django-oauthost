@@ -3,6 +3,7 @@ from secrets import token_urlsafe
 
 from django.conf import settings
 from django.db import models, IntegrityError
+from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 
 
@@ -371,6 +372,39 @@ class Token(OauthostModel):
     def generate_token(cls) -> str:
         """Identifier length: 32 chars."""
         return str(uuid4()).replace('-', '')
+
+    @classmethod
+    def validate_access_token(cls, token_value: str, scope: str = None) -> 'tuple[Token, None] | tuple[None, str]':
+        """Validates an access token value.
+
+        Returns a tuple (token, None) if the token is valid,
+        or (None, error_hint) otherwise, where error_hint is
+        'invalid_token' or 'insufficient_scope'.
+
+        :param token_value: Access token value.
+        :param scope: Scope identifier string to check token has access to the scope.
+
+        """
+        try:
+            token = cls.objects.get(access_token=token_value)
+
+        except cls.DoesNotExist:
+            return None, 'invalid_token'
+
+        # If token found is granted to all the different token type.
+        if token.access_token_type != 'bearer':
+            return None, 'invalid_token'
+
+        # Token has expired.
+        if token.expires_at is not None and token.expires_at <= now():
+            return None, 'invalid_token'
+
+        # If target scope is defined, let's verify that the token has access to it.
+        if scope is not None:
+            if not token.scopes.filter(identifier=scope).count():
+                return None, 'insufficient_scope'
+
+        return token, None
 
     def save(self, force_insert=False, force_update=False, **kwargs):
         if not self.access_token:
