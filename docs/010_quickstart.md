@@ -118,7 +118,7 @@ to access protected views.
 
         4.1.2. Grant token implicitly.
 
-            1. Request for authorization code with GET HTTP method:
+            1. Request for access token with GET HTTP method:
 
                 `{BASE_URL}auth/?client_id=1234&response_type=token`
 

@@ -10,6 +10,14 @@
 
 *Reusable application for Django to protect your apps with OAuth 2.0.*
 
+Use it when you want your site to **issue** access tokens: open your API
+to third-party applications or let your own mobile/SPA app talk to your
+Django backend. Note that oauthost is an OAuth server, not a client —
+it can not sign your users in via external providers.
+
+See usage scenarios with diagrams:
+<https://django-oauthost.readthedocs.io/>
+
 It allows to guard your application views with OAuth 2.0 in quite a trivial way.
 
 1. Register your client using Django Admin or API:

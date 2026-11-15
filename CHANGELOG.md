@@ -1,11 +1,13 @@
 # django-oauthost changelog
 
 ### Unreleased
+* ++ Added Usage scenarios documentation page with diagrams.
 * ++ Test coverage raised from 75% to 93%.
 * ** Abstract method stubs are now excluded from coverage report.
 * ** Admin contrib enabled in tests, admin module is now covered.
 * ** Dropped dead compatibility code for South and Django below 2.0.
 * ** Extracted common save-with-regeneration logic into OauthostModel base model.
+* ** Fixed implicit grant description in quickstart.
 * ** Fixed oauth_required decorator broken by available_attrs import removed in modern Django.
 * ** Fixed syncscopes command unable to accept arguments on modern Django.
 * ** Fixed URLSchemeField rejecting custom URI schemes on modern Django.
