@@ -1,6 +1,6 @@
 # django-oauthost changelog
 
-### Unreleased
+### v1.2.0 [2026-11-15]
 * !! Authorization codes are now cryptographically random 43-char strings instead of 7-digit numbers (kudos Sanjeev Kumar).
 * ++ Authorization codes now expire after OAUTHOST_CODE_LIFETIME seconds, 10 minutes by default (kudos Sanjeev Kumar).
 * ** Client secrets are now compared in constant time.
