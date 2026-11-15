@@ -1,9 +1,16 @@
 from itertools import count
 
+import django
 import pytest
 
 from pytest_djangoapp import configure_djangoapp_plugin
 
+
+EXTRA_APPS = ['django.contrib.sessions']
+
+# Modern DRF requires Django 4.2+.
+if django.VERSION >= (4, 2):
+    EXTRA_APPS += ['rest_framework', 'drf_spectacular']
 
 pytest_plugins = configure_djangoapp_plugin(
     {
@@ -11,11 +18,7 @@ pytest_plugins = configure_djangoapp_plugin(
         'REST_FRAMEWORK': {'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema'},
     },
     admin_contrib=True,
-    extend_INSTALLED_APPS=[
-        'django.contrib.sessions',
-        'rest_framework',
-        'drf_spectacular',
-    ],
+    extend_INSTALLED_APPS=EXTRA_APPS,
     extend_MIDDLEWARE=[
         'django.middleware.common.CommonMiddleware',
         'django.contrib.sessions.middleware.SessionMiddleware',

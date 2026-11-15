@@ -6,17 +6,9 @@
 * ++ Added drf-spectacular (OpenAPI) support for DRF integration.
 * ++ Added Token Introspection endpoint (RFC 7662), attachable via oauthost.views.endpoint_introspect.
 * ++ Added Usage scenarios documentation page with diagrams.
-* ** Dropped dead compatibility code for South and Django below 2.0.
-* ** Extracted access token validation into Token.validate_access_token.
-* ** Extracted client authentication into authenticate_client and JSON response building into utils.build_json_response.
-* ** Extracted common save-with-regeneration logic into OauthostModel base model.
-* ** Fixed implicit grant description in quickstart.
-* ** Fixed oauth_required decorator broken by available_attrs import removed in modern Django.
+* ** Fixed oauth_required decorator broken on modern Django.
 * ** Fixed syncscopes command unable to accept arguments on modern Django.
 * ** Fixed URLSchemeField rejecting custom URI schemes on modern Django.
-* ** Integration docs moved into docs/020_integrations/ subdirectory.
-* ** README and scenarios docs now list available usage scenarios and mention django-sitegate as a complement for social login.
-* ** README now mentions Django REST framework support.
 
 ### v1.2.0 [2026-11-15]
 * !! Authorization codes are now cryptographically random 43-char strings instead of 7-digit numbers (kudos Sanjeev Kumar).

@@ -1,3 +1,4 @@
+import django
 import pytest
 
 from datetime import timedelta
@@ -5,6 +6,8 @@ from datetime import timedelta
 from django.utils.timezone import now
 
 from oauthost.models import Scope, Token
+
+pytestmark = pytest.mark.skipif(django.VERSION < (4, 2), reason='Modern DRF requires Django 4.2+.')
 
 
 @pytest.fixture(autouse=True)

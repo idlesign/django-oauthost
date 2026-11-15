@@ -1,6 +1,9 @@
+import django
 import pytest
 
-from drf_spectacular.generators import SchemaGenerator
+pytestmark = pytest.mark.skipif(django.VERSION < (4, 2), reason='Modern DRF requires Django 4.2+.')
+
+SchemaGenerator = pytest.importorskip('drf_spectacular.generators').SchemaGenerator
 
 
 @pytest.fixture(autouse=True)
