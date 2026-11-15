@@ -777,7 +777,7 @@ class AuthorizeEndpoint(EndpointBase):
     @classmethod
     def get_input_params(cls, request: HttpRequest) -> dict:
         post = request.POST.dict()
-        return post if post else request.GET.dict()
+        return post or request.GET.dict()
 
     def get_redirect_url(self, client: Client) -> str:
         """Calculates a redirect URI.
