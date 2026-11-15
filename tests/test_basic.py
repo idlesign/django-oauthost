@@ -186,7 +186,8 @@ class TestEndpointToken:
         assert resp.status_code == 400
         assert resp.content_json['error'] == 'invalid_grant'
 
-    def test_grant_authorization_code_expired(self, settings, client, client_oauth, redirect_endpoint, auth_code, scope_1):
+    def test_grant_authorization_code_expired(
+            self, settings, client, client_oauth, redirect_endpoint, auth_code, scope_1):
 
         settings.DEBUG = True
 
@@ -208,7 +209,8 @@ class TestEndpointToken:
         assert resp.content_json['error'] == 'invalid_grant'
         assert not AuthorizationCode.objects.filter(pk=code_1.pk).exists()
 
-    def test_grant_authorization_code_replay(self, settings, client, client_oauth, redirect_endpoint, auth_code, scope_1):
+    def test_grant_authorization_code_replay(
+            self, settings, client, client_oauth, redirect_endpoint, auth_code, scope_1):
 
         settings.DEBUG = True
 
@@ -232,7 +234,8 @@ class TestEndpointToken:
         assert Token.objects.filter(code=code_1).count() == 0
         assert not AuthorizationCode.objects.filter(pk=code_1.pk).exists()
 
-    def test_grant_authorization_code_another_client(self, settings, client, client_oauth, redirect_endpoint, auth_code, scope_1):
+    def test_grant_authorization_code_another_client(
+            self, settings, client, client_oauth, redirect_endpoint, auth_code, scope_1):
 
         settings.DEBUG = True
 
@@ -296,7 +299,7 @@ class TestEndpointAuthorize:
         client_1 = client_oauth(identifier='cl012345')
         client_2 = client_oauth()
 
-        redirect_1 = redirect_endpoint(client_1)
+        redirect_endpoint(client_1)
         redirect_endpoint(client_2, 'http://redirect-test1.com')
         redirect_endpoint(client_2, 'http://redirect-test2.com')
 
@@ -540,7 +543,7 @@ class TestGrants:
         username = user.username
         password = 'password'
 
-        client_1 = client_oauth(identifier='OClient', password='cl012345')
+        client_oauth(identifier='OClient', password='cl012345')
 
         # Scope is missing.
         resp = client.post(

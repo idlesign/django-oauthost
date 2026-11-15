@@ -1,4 +1,5 @@
 from django.apps import AppConfig
+from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 
 
@@ -12,8 +13,6 @@ class OauthostConfig(AppConfig):
     def ready(self):
         super().ready()
 
-        from django.conf import settings
-
         # Register OpenAPI authentication scheme when drf-spectacular is in use.
         if 'drf_spectacular' in settings.INSTALLED_APPS:
-            from .integration import drf_spectacular  # noqa: F401
+            from .integration import drf_spectacular  # noqa: PLC0415

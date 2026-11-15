@@ -51,7 +51,7 @@ class TestSyncScopes:
     def test_no_views_module(self, fake_app):
         fake_app('appnoviews')
 
-        with pytest.raises(CommandError, match='No views.py'):
+        with pytest.raises(CommandError, match=r'No views\.py'):
             call_command('syncscopes', 'appnoviews')
 
     def test_sync(self, fake_app, capsys):

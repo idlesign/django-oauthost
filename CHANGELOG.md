@@ -16,6 +16,7 @@
 * ** Extracted common save-with-regeneration logic into OauthostModel base model.
 * ** Fixed implicit grant description in quickstart.
 * ** Fixed oauth_required decorator broken by available_attrs import removed in modern Django.
+* ** Fixed ruff lint violations breaking CI.
 * ** Fixed syncscopes command unable to accept arguments on modern Django.
 * ** Fixed URLSchemeField rejecting custom URI schemes on modern Django.
 * ** Integration docs moved into docs/020_integrations/ subdirectory.

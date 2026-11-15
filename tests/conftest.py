@@ -35,11 +35,11 @@ def client_queries(request_client, db_queries):
 @pytest.fixture
 def client_oauth(user):
     """Callable fixture creating OAuth clients."""
-    from oauthost.models import Client
+    from oauthost.models import Client  # noqa: PLC0415
 
     titles = count(1)
 
-    def client_oauth_(**params) -> Client:
+    def client_oauth_(**params):
         params.setdefault('title', f'OClient{next(titles)}')
         client = Client(user=user, **params)
         client.save()
@@ -51,9 +51,9 @@ def client_oauth(user):
 @pytest.fixture
 def redirect_endpoint():
     """Callable fixture creating redirection endpoints."""
-    from oauthost.models import RedirectionEndpoint
+    from oauthost.models import RedirectionEndpoint  # noqa: PLC0415
 
-    def redirect_endpoint_(client: 'Client', uri: str = 'http://redirect-test.com') -> RedirectionEndpoint:
+    def redirect_endpoint_(client, uri='http://redirect-test.com'):
         endpoint = RedirectionEndpoint(client=client, uri=uri)
         endpoint.save()
         return endpoint
@@ -64,9 +64,9 @@ def redirect_endpoint():
 @pytest.fixture
 def auth_code(user):
     """Callable fixture creating authorization codes."""
-    from oauthost.models import AuthorizationCode
+    from oauthost.models import AuthorizationCode  # noqa: PLC0415
 
-    def auth_code_(client: 'Client', uri: str) -> AuthorizationCode:
+    def auth_code_(client, uri):
         code = AuthorizationCode(user=user, client=client, uri=uri)
         code.save()
         return code
@@ -76,7 +76,7 @@ def auth_code(user):
 
 @pytest.fixture
 def scope_1():
-    from oauthost.models import Scope
+    from oauthost.models import Scope  # noqa: PLC0415
 
     scope = Scope(identifier='scope1')
     scope.save()
