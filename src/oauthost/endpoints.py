@@ -1,4 +1,3 @@
-import json
 from base64 import b64decode
 from datetime import timedelta
 from secrets import compare_digest
@@ -16,9 +15,85 @@ from django.utils.translation import gettext_lazy as _
 from .exceptions import EndpointError, OauthostException
 from .models import Client, AuthorizationCode, Token, Scope
 from .settings import CODE_LIFETIME, TEMPLATE_AUTHORIZE, TEMPLATE_AUTHORIZE_ERROR, TEMPLATE_AUTHORIZE_PROCEED
-from .utils import get_remote_ip, LOGGER
+from .utils import build_json_response, get_remote_ip, LOGGER
 
 User = get_user_model()
+
+
+def authenticate_client(request: HttpRequest, input_params: dict) -> Client:
+    """Returns client object authenticated by its credentials.
+
+    Credentials are accepted via HTTP Basic authorization header
+    or `client_id` and `client_secret` request parameters.
+
+    Raises ErrorTokenEndpointRedirect if unable to authenticate.
+
+    """
+    client = None
+    auth_error_headers = {}
+    client_id = None
+    client_password = None
+
+    authorization_method = request.META.get('Authorization')
+
+    if authorization_method is not None:  # Authorization header detected.
+        auth_method_type, auth_method_value = authorization_method.split(' ', 1)
+        auth_error_headers['WWW-Authenticate'] = auth_method_type
+        # Handle client auth through HTTP Basic.
+        if auth_method_type == 'Basic':
+            try:
+                client_id, client_password = b64decode(auth_method_value).decode('utf-8').split(':')
+
+            except (TypeError, UnicodeDecodeError, AttributeError):
+                pass
+    else:
+
+        # SPEC:
+        #    Alternatively, the authorization server MAY support including the
+        #    client credentials in the request-body using the following
+        #    parameters: client_id, client_secret.
+        #
+        #    Including the client credentials in the request-body using the two
+        #    parameters is NOT RECOMMENDED and SHOULD be limited to clients unable
+        #    to directly utilize the HTTP Basic authentication scheme (or other
+        #    password-based HTTP authentication schemes).  The parameters can only
+        #    be transmitted in the request-body and MUST NOT be included in the
+        #    request URI.
+        #
+        #    The parameters can only
+        #    be transmitted in the request-body and MUST NOT be included in the
+        #    request URI.
+        client_id = input_params.get('client_id')
+        client_password = input_params.get('client_secret')
+
+    if client_id is not None:
+        try:
+            client = Client.objects.get(identifier=client_id)
+        except ObjectDoesNotExist:
+            client = None
+
+        # SPEC:
+        #
+        #    A client MAY use the "client_id" request parameter to identify itself
+        #    when sending requests to the token endpoint.  In the
+        #    "authorization_code" "grant_type" request to the token endpoint, an
+        #    unauthenticated client MUST send its "client_id" to prevent itself
+        #    from inadvertently accepting a code intended for a client with a
+        #    different "client_id".  This protects the client from substitution of
+        #    the authentication code.  (It provides no additional security for the
+        #    protected resource.)
+        if client is not None and client.password.strip() != '':
+            if client_password is None or not compare_digest(client.password, client_password):
+                client = None
+
+    if client is None:
+        raise ErrorTokenEndpointRedirect(
+            TokenEndpoint.ERROR_INVALID_CLIENT,
+            'Unable to authenticate client by its credentials.',
+            http_status=401, additional_headers=auth_error_headers
+        )
+
+    return client
 
 
 class ScopeException(OauthostException):
@@ -347,89 +422,11 @@ class TokenEndpoint(EndpointBase):
     @classmethod
     def build_response(cls, data_dict: dict, http_status: int = 200, additional_headers: dict = None):
         """For token endpoint. Issues JSON response."""
-
-        response = HttpResponse(
-            content_type='application/json;charset=UTF-8',
-            content=json.dumps(data_dict), status=http_status
-        )
-        response['Cache-Control'] = 'no-store'
-        response['Pragma'] = 'no-cache'
-
-        if additional_headers is None:
-            additional_headers = {}
-
-        for key, value in additional_headers.items():
-            response[key] = value
-
-        return response
+        return build_json_response(data_dict, http_status, additional_headers)
 
     def get_client(self) -> Client:
         """Returns client object."""
-        client = None
-        auth_error_headers = {}
-        client_id = None
-        client_password = None
-
-        authorization_method = self.request.META.get('Authorization')
-
-        if authorization_method is not None:  # Authorization header detected.
-            auth_method_type, auth_method_value = authorization_method.split(' ', 1)
-            auth_error_headers['WWW-Authenticate'] = auth_method_type
-            # Handle client auth through HTTP Basic.
-            if auth_method_type == 'Basic':
-                try:
-                    client_id, client_password = b64decode(auth_method_value).decode('utf-8').split(':')
-
-                except (TypeError, UnicodeDecodeError, AttributeError):
-                    pass
-        else:
-
-            # SPEC:
-            #    Alternatively, the authorization server MAY support including the
-            #    client credentials in the request-body using the following
-            #    parameters: client_id, client_secret.
-            #
-            #    Including the client credentials in the request-body using the two
-            #    parameters is NOT RECOMMENDED and SHOULD be limited to clients unable
-            #    to directly utilize the HTTP Basic authentication scheme (or other
-            #    password-based HTTP authentication schemes).  The parameters can only
-            #    be transmitted in the request-body and MUST NOT be included in the
-            #    request URI.
-            #
-            #    The parameters can only
-            #    be transmitted in the request-body and MUST NOT be included in the
-            #    request URI.
-            client_id = self.input_params.get('client_id')
-            client_password = self.input_params.get('client_secret')
-
-        if client_id is not None:
-            try:
-                client = Client.objects.get(identifier=client_id)
-            except ObjectDoesNotExist:
-                client = None
-
-            # SPEC:
-            #
-            #    A client MAY use the "client_id" request parameter to identify itself
-            #    when sending requests to the token endpoint.  In the
-            #    "authorization_code" "grant_type" request to the token endpoint, an
-            #    unauthenticated client MUST send its "client_id" to prevent itself
-            #    from inadvertently accepting a code intended for a client with a
-            #    different "client_id".  This protects the client from substitution of
-            #    the authentication code.  (It provides no additional security for the
-            #    protected resource.)
-            if client is not None and client.password.strip() != '':
-                if client_password is None or not compare_digest(client.password, client_password):
-                    client = None
-
-        if client is None:
-            raise ErrorTokenEndpointRedirect(
-                self.ERROR_INVALID_CLIENT,
-                'Unable to authenticate client by its credentials.',
-                http_status=401, additional_headers=auth_error_headers
-            )
-
-        return client
+        return authenticate_client(self.request, self.input_params)
 
     def get_token_for_grant_type(self, grant_type: str, client: Client) -> Token:
         """Returns token object for a given grant type."""
@@ -629,6 +626,58 @@ class TokenEndpoint(EndpointBase):
         )
 
         return self.build_response(token_doc)
+
+
+class IntrospectionEndpoint(EndpointBase):
+    """
+    RFC 7662: OAuth 2.0 Token Introspection.
+
+    Allows a protected resource server to query the authorization server
+    to determine the state of a token (access or refresh) and its metadata.
+
+    The endpoint is available to confidential clients only
+    and is not attached to URLs by default.
+
+    REQUEST
+        token REQUIRED
+        token_type_hint OPTIONAL ('access_token' or 'refresh_token')
+
+    SUCCESS
+        active REQUIRED
+        token_type, scope, client_id, username, exp, iat OPTIONAL
+
+    FAILURE
+        400 invalid_request - `token` param is missing
+        401 invalid_client - unable to authenticate the caller
+
+    """
+
+    def get_client(self) -> Client:
+        """Returns client object."""
+        return authenticate_client(self.request, self.input_params)
+
+    def process_request(self) -> HttpResponse:
+        """Main method performing client request processing."""
+        client = self.get_client()
+
+        # RFC 7662: The endpoint MUST require authorization.
+        # Public clients have no credentials to authenticate with.
+        if not client.is_confidential():
+            raise ErrorTokenEndpointRedirect(
+                TokenEndpoint.ERROR_INVALID_CLIENT,
+                'Token introspection is available to confidential clients only.',
+                http_status=401)
+
+        token_value = self.input_params.get('token')  # REQUIRED
+
+        if token_value is None:
+            raise ErrorTokenEndpointRedirect(
+                TokenEndpoint.ERROR_INVALID_REQUEST,
+                'Required `token` param is missing.')
+
+        token_type_hint = self.input_params.get('token_type_hint')  # OPTIONAL
+
+        return build_json_response(Token.introspect(token_value, token_type_hint))
 
 
 class AuthorizeEndpoint(EndpointBase):

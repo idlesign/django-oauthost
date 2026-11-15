@@ -96,12 +96,27 @@ def vote(request, poll_id):
     ...
 ```
 
+## Scenario 4: Separate resource server
+
+The protected site (A) and the authorization site (B) are different
+projects not sharing a database. Site A can not check tokens against
+site B's database directly, so it asks site B through
+[token introspection](026_introspection.md) whether a token is active.
+
+```mermaid
+sequenceDiagram
+    participant App as Client app
+    participant A as Site A (resources)
+    participant B as Site B (oauthost)
+
+    App->>B: Gets a token (see Scenario 1)
+    App->>A: API request with Bearer token
+    A->>B: POST /introspect/ (token + own credentials)
+    B-->>A: active + scope + user
+    A-->>App: Protected resource
+```
+
 ## What does not fit
 
 * **Social login for your users** ("Sign in with Google") — oauthost
   is a server, not a client. Look at client-side libraries instead.
-
-* **Separate resource server** — if the protected site (A) and the
-  authorization site (B) are different projects not sharing a database,
-  site A needs a way to check tokens issued by site B. oauthost currently
-  checks tokens against its own database only.

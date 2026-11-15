@@ -406,6 +406,59 @@ class Token(OauthostModel):
 
         return token, None
 
+    @classmethod
+    def introspect(cls, token_value: str, token_type_hint: str = None) -> dict:
+        """Returns token metadata in RFC 7662 introspection response format.
+
+        :param token_value: Access or refresh token value.
+        :param token_type_hint: Optional hint: 'access_token' or 'refresh_token'.
+
+        """
+        lookups = [('access_token', 'Bearer'), ('refresh_token', 'refresh_token')]
+
+        if token_type_hint == 'refresh_token':
+            lookups.reverse()
+
+        token = None
+        token_type = None
+
+        for field, lookup_type in lookups:
+
+            try:
+                token = cls.objects.select_related('client', 'user').get(**{field: token_value})
+
+            except cls.DoesNotExist:
+                continue
+
+            token_type = lookup_type
+            break
+
+        if token is None:
+            return {'active': False}
+
+        if token_type == 'Bearer' and token.expires_at is not None and token.expires_at <= now():
+            return {'active': False}
+
+        document = {
+            'active': True,
+            'token_type': token_type,
+            'client_id': token.client.identifier,
+            'iat': int(token.date_issued.timestamp()),
+        }
+
+        if token.user is not None:
+            document['username'] = token.user.username
+
+        if token_type == 'Bearer' and token.expires_at is not None:
+            document['exp'] = int(token.expires_at.timestamp())
+
+        scopes = [scope.identifier for scope in token.scopes.all()]
+
+        if scopes:
+            document['scope'] = ' '.join(scopes)
+
+        return document
+
     def save(self, force_insert=False, force_update=False, **kwargs):
         if not self.access_token:
 

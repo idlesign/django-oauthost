@@ -15,6 +15,9 @@ to third-party applications or let your own mobile/SPA app talk to your
 Django backend. Note that oauthost is an OAuth server, not a client —
 it can not sign your users in via external providers.
 
+Integrates with Django REST framework out of the box
+(authentication, scope permissions, OpenAPI schema).
+
 See usage scenarios with diagrams:
 <https://django-oauthost.readthedocs.io/>
 
