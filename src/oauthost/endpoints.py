@@ -1,8 +1,7 @@
 import json
 from base64 import b64decode
-from datetime import datetime
+from datetime import timedelta
 from secrets import compare_digest
-from time import time
 from typing import List, Union
 
 from django.conf import settings
@@ -226,7 +225,7 @@ class EndpointBase:
         expires_at = None
 
         if expires_in is not None:
-            expires_at = datetime.fromtimestamp(int(time() + expires_in))
+            expires_at = now() + timedelta(seconds=expires_in)
 
         if token_obj_params is None:
             token_obj_params = {}
@@ -609,7 +608,7 @@ class TokenEndpoint(EndpointBase):
                     'Refresh token supplied was issued to another client.')
 
         # For refresh token grant we only swap token values.
-        token.date_issued = datetime.now()
+        token.date_issued = now()
 
         token.access_token = token.generate_token()
         token.refresh_token = token.generate_token()
