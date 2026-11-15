@@ -2,11 +2,9 @@ import pytest
 
 from datetime import timedelta
 
-from django.contrib.sessions.backends.db import SessionStore
 from django.utils.timezone import now
 
 from oauthost.models import Scope, Token
-from oauthost.toolbox import PistonAuthHelper
 
 
 @pytest.fixture(autouse=True)
@@ -99,18 +97,3 @@ class TestScopeAuto:
 
         response = client_queries.get('/auto/', **auth_header(token))
         assert response.status_code == 200
-
-
-class TestPistonAuthHelper:
-
-    def test_flow(self, token, request_get):
-        helper = PistonAuthHelper('test:scope')
-
-        assert not helper.is_authenticated(request_get('/'))
-        assert helper.challenge().status_code == 400
-
-        request = request_get('/', **auth_header(token))
-        request.session = SessionStore()
-
-        assert helper.is_authenticated(request)
-        assert helper.challenge() is None

@@ -1,6 +1,7 @@
 # django-oauthost changelog
 
 ### Unreleased
+* !! Removed Piston integration (PistonAuthHelper) since the Piston framework is long dead.
 * ++ Added Usage scenarios documentation page with diagrams.
 * ++ Test coverage raised from 75% to 93%.
 * ** Abstract method stubs are now excluded from coverage report.

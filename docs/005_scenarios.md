@@ -96,8 +96,6 @@ def vote(request, poll_id):
     ...
 ```
 
-See [Helpers](020_helpers.md) for details.
-
 ## What does not fit
 
 * **Social login for your users** ("Sign in with Google") — oauthost

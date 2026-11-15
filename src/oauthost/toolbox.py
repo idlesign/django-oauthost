@@ -114,26 +114,3 @@ def auth_handler_response(request: HttpRequest, scope: str = None) -> HttpRespon
             return response
 
     return None
-
-
-class PistonAuthHelper:
-    """Authentication class for Piston resources.
-
-    To be used in a usual piston-auth-way::
-
-        from piston.resource import Resource
-        from oauthost.utils import PistonAuthHelper
-
-        my_resource_view = Resource(MyResourceHandler, authentication=PistonAuthHelper('my_resource:my_scope'))
-
-    """
-    def __init__(self, target_scope: str):
-        self.target_scope = target_scope
-        self.auth_response = None
-
-    def is_authenticated(self, request: HttpRequest):
-        self.auth_response = auth_handler_response(request, scope=self.target_scope)
-        return self.auth_response is None
-
-    def challenge(self):
-        return self.auth_response
