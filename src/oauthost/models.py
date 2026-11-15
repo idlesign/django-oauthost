@@ -13,6 +13,33 @@ from .settings import REGISTRY_TOKEN_TYPE, TOKEN_TYPE_BEARER
 USER_MODEL = getattr(settings, 'AUTH_USER_MODEL', 'auth.User')
 
 
+class OauthostModel(models.Model):
+    """Base class for oauthost models."""
+
+    class Meta:
+        abstract = True
+
+    def save_with_regeneration(self, regenerate, *args, **kwargs):
+        """Saves the instance, calling `regenerate` and retrying on unique constraint violation.
+
+        :param regenerate: Callable updating field(s) with freshly generated values.
+        :param args: `Model.save()` arguments.
+        :param kwargs: `Model.save()` keyword arguments.
+
+        """
+        while True:
+            regenerate()
+
+            try:
+                super().save(*args, **kwargs)
+
+            except IntegrityError:
+                pass
+
+            else:
+                break
+
+
 class Scope(models.Model):
 
     STATUS_ENABLED = 1
@@ -44,7 +71,7 @@ class Scope(models.Model):
         return f'{self.identifier}'
 
 
-class Client(models.Model):
+class Client(OauthostModel):
 
     TYPE_CONFIDENTIAL = 1
     """
@@ -182,18 +209,10 @@ class Client(models.Model):
     def save(self, force_insert=False, force_update=False, **kwargs):
 
         if not self.identifier:
+            self.save_with_regeneration(
+                lambda: setattr(self, 'identifier', self.generate_indentifier()),
+                force_insert=force_insert, force_update=force_update, **kwargs)
 
-            while True:
-                self.identifier = self.generate_indentifier()
-
-                try:
-                    super().save(force_insert=force_insert, force_update=force_update, **kwargs)
-
-                except IntegrityError:
-                    pass
-
-                else:
-                    break
         else:
             super().save(force_insert=force_insert, force_update=force_update, **kwargs)
 
@@ -247,7 +266,7 @@ class RedirectionEndpoint(models.Model):
         return f'{self.uri}'
 
 
-class AuthorizationCode(models.Model):
+class AuthorizationCode(OauthostModel):
 
     # A maximum authorization code lifetime of 10 minutes is RECOMMENDED.
     # Enforced by OAUTHOST_CODE_LIFETIME setting.
@@ -290,19 +309,15 @@ class AuthorizationCode(models.Model):
 
     def save(self, force_insert=False, force_update=False, **kwargs):
         if not self.code:
-            while True:
-                self.code = self.generate_code()
-                try:
-                    super().save(force_insert=force_insert, force_update=force_update, **kwargs)
-                except IntegrityError:
-                    pass
-                else:
-                    break
+            self.save_with_regeneration(
+                lambda: setattr(self, 'code', self.generate_code()),
+                force_insert=force_insert, force_update=force_update, **kwargs)
+
         else:
             super().save(force_insert=force_insert, force_update=force_update, **kwargs)
 
 
-class Token(models.Model):
+class Token(OauthostModel):
 
     # A maximum authorization code lifetime of 10 minutes is RECOMMENDED
     date_issued = models.DateTimeField(
@@ -359,15 +374,13 @@ class Token(models.Model):
 
     def save(self, force_insert=False, force_update=False, **kwargs):
         if not self.access_token:
-            while True:
+
+            def regenerate():
                 self.access_token = self.generate_token()
                 self.refresh_token = self.generate_token()
 
-                try:
-                    super().save(force_insert=force_insert, force_update=force_update, **kwargs)
-                except IntegrityError:
-                    pass
-                else:
-                    break
+            self.save_with_regeneration(
+                regenerate, force_insert=force_insert, force_update=force_update, **kwargs)
+
         else:
             super().save(force_insert=force_insert, force_update=force_update, **kwargs)

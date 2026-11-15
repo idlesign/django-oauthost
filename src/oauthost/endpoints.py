@@ -253,11 +253,11 @@ class EndpointBase:
 
     def get_client(self) -> Client:
         """Returns client object."""
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: nocover
 
     def process_request(self) -> HttpResponse:
         """Main method performing client request processing."""
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: nocover
 
 
 class TokenEndpoint(EndpointBase):

@@ -9,6 +9,7 @@ pytest_plugins = configure_djangoapp_plugin(
     {
         'ROOT_URLCONF': 'oauthost.urls',
     },
+    admin_contrib=True,
     extend_INSTALLED_APPS=[
         'django.contrib.sessions',
     ],
